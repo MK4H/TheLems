@@ -51,7 +51,7 @@ namespace TheLems
         {
             Cas = DateTime.Now; //FORTESTING
 
-            int[] PoziceATypy = Hra.Tick();
+            ForDrawing PoziceATypy = Hra.Tick();
             GameDraw(PoziceATypy);
         }
 
@@ -108,7 +108,7 @@ namespace TheLems
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
                     Lemmings = new Bitmap(@"Animations\Lemmings.png");
 
-                    Hra = new Logika(Popredi,100,20);
+                    Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
                     Timer.Start();
                     break;
                 
@@ -118,16 +118,16 @@ namespace TheLems
             }
         }
 
-        private void GameDraw(int[] PoziceATypy)
+        private void GameDraw(ForDrawing PoziceATypy)
         {
             Grafika.Clear(Color.Empty);
             Grafika.DrawImage(Pozadi, 0, 0);
             Grafika.DrawImage(Popredi, 0, 0);
-            for (int i = 0; i < PoziceATypy.Length; i += 3)
-            {
-                switch (PoziceATypy[i])
+            while (PoziceATypy != null)
+            { 
+                switch (PoziceATypy.Typ)
                 {
-                    case 1: Grafika.DrawImage(Lemmings, PoziceATypy[i + 1] - 4, PoziceATypy[i + 2] - 10);
+                    case 1: Grafika.DrawImage(Lemmings, PoziceATypy.Souradnice.X - 4, PoziceATypy.Souradnice.Y - 10);
                         break;
                 }
             }
@@ -137,22 +137,81 @@ namespace TheLems
         }
     }
 
+    class ForDrawing //Pro predavani informaci, kam nakreslit lemingy
+    {
+        public Point Souradnice;
+        public int Typ;
+        public int Smer;
+        public bool Death;
+        public bool detonation;
+        public ForDrawing Dalsi;
+
+        public ForDrawing(Point Souradnice, int Typ, int Smer, bool Death, bool detonation)
+        {
+            this.Souradnice = Souradnice;
+            this.Typ = Typ;
+            this.Smer = Smer;
+            this.Death = Death;
+            this.detonation = detonation;
+            Dalsi = null;
+        }
+
+        public ForDrawing()
+        {
+            Typ = -1; //Oznaceni hlavy spojaku
+            Dalsi = null;
+        }
+    }
+
+
     class Logika
     {
+
+        class Spawn
+        {
+            int DobaMeziSpawny;
+            int TickOdPredchozihoSpawnu;
+            public Point Souradnice;
+
+            public Lemming Tick()
+            {
+                TickOdPredchozihoSpawnu = (TickOdPredchozihoSpawnu + 1) % DobaMeziSpawny;
+                if (TickOdPredchozihoSpawnu == 0)
+                {
+                    return new Walker(Souradnice, 0, 1, false);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+
+            public Spawn(int DobaMeziSpawny, Point Souradnice)
+            {
+                this.DobaMeziSpawny = DobaMeziSpawny;
+                this.Souradnice = Souradnice;
+                TickOdPredchozihoSpawnu = -1; //Mozne pridat delay pred prvnim spawnem
+            }
+
+
+        }
+
         abstract class Lemming
         {
+            public int Typ;
             public Point Pozice;
             public int Falling;
             public int Smer;
             public bool detonate;
             protected int TicksToDetonation;
-            public abstract bool Move(Bitmap Popredi); //bool protoze kdyz umre tak to vrati true a muzu ho zabit
+            public abstract int Move(Bitmap Popredi); //bool protoze kdyz umre tak to vrati true a muzu ho zabit
             
         }
 
         class Walker : Lemming
         {
-            public override bool Move(Bitmap Popredi)
+            public override int Move(Bitmap Popredi)
             {
                 if (Falling > 0)
                 {
@@ -160,7 +219,7 @@ namespace TheLems
                     {
                         if (Falling > 10)
                         {
-                            return true;
+                            return 1;
                         }
                         else
                         {
@@ -203,7 +262,7 @@ namespace TheLems
                         Falling = 1;
                     }
                 }
-                return false;
+                return 0;
             }
 
             public Walker(Point Pozice, int Falling, int Smer,bool detonate)
@@ -212,69 +271,64 @@ namespace TheLems
                 this.Falling = Falling;
                 this.Smer = Smer;
                 this.detonate = detonate;
+                Typ = 1;
                 TicksToDetonation = 5*1000 / 24; //5 sekund
             }
         }
 
         Lemming[] Lemmingove;
+        Spawn[] Spawny;
         Bitmap Popredi;
         int Selected;
-        int CisloTicku;
-        int RychlostSpawnu;
         int AktualniPocetZivichLemmingu;
         int PocetSpawnutych;
-        int CelkovyPocetLemmingu;
 
-        public int[] Tick() //vraci pro kazdyho 3 hodnoty v poradi TYP, X, Y
+
+        public ForDrawing Tick() 
         {
-            int[] navrat = new int[(AktualniPocetZivichLemmingu+1)*3]; //Predelat na vraceni jinyho typu
-            int TempInt = 0; 
+            ForDrawing navrat = new ForDrawing(); //Predelat na vraceni jinyho typu
             
             //Move
             for (int i = 0; i < Lemmingove.Length; i++)
             {
                 if (Lemmingove[i] != null)
-                    if (Lemmingove[i].Move(Popredi))
-                    {   
-                        navrat[TempInt] = 0;
-                        TempInt++;
-                        navrat[TempInt] = Lemmingove[i].Pozice.X;
-                        TempInt++;
-                        navrat[TempInt] = Lemmingove[i].Pozice.Y;
-                        TempInt++;
-                        Lemmingove[i] = null;//DEATH
-                        AktualniPocetZivichLemmingu--;
-                    }
-                    else
+                    switch (Lemmingove[i].Move(Popredi))
                     {
-                        if (Lemmingove[i] is Walker)
-                            navrat[TempInt] = 1;
-                        else
-                            navrat[TempInt] = 2; //atd
-                        TempInt++;
-                        navrat[TempInt] = Lemmingove[i].Pozice.X;
-                        TempInt++;
-                        navrat[TempInt] = Lemmingove[i].Pozice.Y;
-                        TempInt++;
+                        case 0: //Zije
+                            navrat.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, false, false);
+                            navrat = navrat.Dalsi;
+                            break;
+
+
+                        case 1: //Spadnul
+                            navrat.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer,true,false);
+                            navrat = navrat.Dalsi;
+                            Lemmingove[i] = null;//DEATH
+                            AktualniPocetZivichLemmingu--;
+                        break;
+
+                        case 2: //Detonate
+                            break;
+                   
                     }
             }
 
 
             //Spawn
-            if (CisloTicku == 0 && PocetSpawnutych < CelkovyPocetLemmingu)
+            Lemming TempLemming;
+            for (int i = 0; (PocetSpawnutych < Lemmingove.Length) && (i < Spawny.Length); i++)
             {
-                Lemmingove[AktualniPocetZivichLemmingu] = new Walker(new Point(100,100),0,1,false);
-                navrat[TempInt] = 1;
-                TempInt++;
-                navrat[TempInt] = Lemmingove[AktualniPocetZivichLemmingu].Pozice.X;
-                TempInt++;
-                navrat[TempInt] = Lemmingove[AktualniPocetZivichLemmingu].Pozice.Y;
-                TempInt++;
-                AktualniPocetZivichLemmingu++;
-                PocetSpawnutych++;
+                TempLemming = Spawny[i].Tick();
+                if (TempLemming != null)
+                {
+                    Lemmingove[PocetSpawnutych] = TempLemming;
+                    PocetSpawnutych++;
+                    AktualniPocetZivichLemmingu++;
+                    navrat.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, false);
+                }
             }
+            
 
-            CisloTicku = (CisloTicku + 1) % RychlostSpawnu;
             return navrat;
         }
 
@@ -292,16 +346,17 @@ namespace TheLems
         }
 
 
-        public Logika(Bitmap Popredi, int PocetLemmingu, int RychlostSpawnu)
+        public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            this.RychlostSpawnu = RychlostSpawnu;
-            Lemmingove = new Lemming[PocetLemmingu];
+            Lemmingove = new Lemming[1];
             Selected = 0;
-            CisloTicku = 0;
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
-            CelkovyPocetLemmingu = PocetLemmingu;
+
+            //FORTESTING
+            Spawny = new Spawn[1];
+            Spawny[0] = new Spawn(50, new Point(100, 100));
         }
 
         
