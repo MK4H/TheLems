@@ -10,6 +10,14 @@ using System.Windows.Forms;
 
 namespace TheLems
 {
+    static class Konstanty
+    {
+        public static int velikostLemaX = 20;
+        public static int velikostLemaY = 10;
+        public static int velikostKurzoru = 10;
+        public static int Rychlosthry = 25;
+    }
+
     public partial class HlavniOkno : Form
     {
         
@@ -37,7 +45,7 @@ namespace TheLems
             SwitchToGame("1");
 
             //NASTAVENI RYCHLOSTI
-            Timer.Interval = 25;
+            Timer.Interval = Konstanty.Rychlosthry;
         }
 
 
@@ -92,7 +100,7 @@ namespace TheLems
         // MOJE METODY
         private void SwitchToMenu()
         {
-
+            
         }
 
         private void SwitchToGame(string Level)
@@ -129,12 +137,13 @@ namespace TheLems
                 {
                     case 1: Grafika.DrawImage(Lemmings, PoziceATypy.Souradnice.X - 8, PoziceATypy.Souradnice.Y - 20);
                         break;
+                    case 2: Grafika.DrawImage()
                 }
                 PoziceATypy = PoziceATypy.Dalsi;
             }
             Grafika.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Arial",10), Brushes.Black, 50, 50);//FORTESTING
             PictureBox.Refresh();
-            UbehlyCas = DateTime.Now.Subtract(Cas);
+            UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
         }
     }
 
@@ -200,70 +209,81 @@ namespace TheLems
 
         abstract class Lemming
         {
-            public int Typ;
+            public int Typ; //TODO PREDELAT TYP ABY BRAL PODLE CLASSY A NE INT
             public Point Pozice;
             public int Falling;
             public int Smer;
             public bool detonate;
             protected int TicksToDetonation;
-            public abstract int Move(Bitmap Popredi); //bool protoze kdyz umre tak to vrati true a muzu ho zabit
+            public abstract int Move(Bitmap Popredi); //hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec
             
         }
 
         class Walker : Lemming
         {
-            public override int Move(Bitmap Popredi)
+            protected virtual int Fall(Bitmap Popredi)
             {
-                if (Falling > 0)
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
                 {
-                    if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
+                    if (Falling > Konstanty.velikostLemaY * 10) //BALANCHRY
                     {
-                        if (Falling > 100)
-                        {
-                            return 1;
-                        }
-                        else
-                        {
-                            Falling = 0;
-                        }
+                        return 1;
                     }
                     else
                     {
-                        Pozice.Y++;
-                        Falling++;
+                        Falling = 0;
                     }
                 }
                 else
                 {
-                    if (Smer != 0 )
-                    {
-                        int Posun = 0;
-                        for (int i = 10; i >= -5; i--)
-                        {
-                            if  (Popredi.GetPixel(Pozice.X + Smer,Pozice.Y - i).A != 0)
-                            {
-                                Posun = i;
-                                break;
-                            }
-                        }
-
-                        if ( Posun < 5) //Velikost lema / 2
-                        {
-                            Pozice.X += Smer;
-                            Pozice.Y -= Posun;
-                        }
-                        else
-                        {
-                            Smer = Smer * (-1);
-                        }
-                    }
-
-                    if (Popredi.GetPixel(Pozice.X,Pozice.Y + 1).A == 0)
-                    {
-                        Falling = 1;
-                    }
+                    Pozice.Y++;
+                    Falling++;
                 }
                 return 0;
+            }
+
+            protected virtual int Sideways(Bitmap Popredi)
+            {
+                if (Smer != 0)
+                {
+                    int Posun = 0;
+                    for (int i = Konstanty.velikostLemaY; i >= -Konstanty.velikostLemaY / 2; i--) //VELIKOSTLEMA
+                    {
+                        if (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A != 0)
+                        {
+                            Posun = i;
+                            break;
+                        }
+                    }
+
+                    if (Posun < Konstanty.velikostLemaY / 2)
+                    {
+                        Pozice.X += Smer;
+                        Pozice.Y -= Posun;
+                    }
+                    else
+                    {
+                        Smer = Smer * (-1);
+                    }
+                }
+
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
+                {
+                    Falling = 1;
+                }
+                return 0;
+            }
+
+            public override int Move(Bitmap Popredi)
+            {
+                if (Falling > 0)
+                {
+                    return Fall(Popredi);
+                }
+                else
+                {
+                    return Sideways(Popredi);
+                }
             }
 
             public Walker(Point Pozice, int Falling, int Smer,bool detonate)
@@ -272,8 +292,37 @@ namespace TheLems
                 this.Falling = Falling;
                 this.Smer = Smer;
                 this.detonate = detonate;
-                Typ = 1;
+                Typ = 1; 
                 TicksToDetonation = 5*1000 / 24; //5 sekund
+            }
+        }
+
+        class Floater : Walker
+        {
+            protected override int Fall(Bitmap Popredi)
+            {
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
+                {
+                    return 3;
+                }
+                else
+                {
+                    if (Falling == 2)
+                    {
+                        Pozice.Y++;
+                        Falling--;
+                    }
+                    else
+                    {
+                        Falling++;
+                    }
+                }
+                return 0;
+            }
+
+            public Floater(Point Pozice, int Falling, int Smer, bool detonate) :base(Pozice,Falling,Smer,detonate)
+            {
+                Typ = 2;
             }
         }
 
@@ -287,8 +336,10 @@ namespace TheLems
 
         public ForDrawing Tick() 
         {
-            ForDrawing navrat = new ForDrawing(); //Predelat na vraceni jinyho typu
+            ForDrawing navrat = new ForDrawing(); 
             ForDrawing Aktualni = navrat;
+            
+            
             //Move
             for (int i = 0; i < Lemmingove.Length; i++)
             {
@@ -309,6 +360,13 @@ namespace TheLems
                         break;
 
                         case 2: //Detonate
+                            break;
+
+                        case 3:  //Zmena zpet na Walkera
+                            Lemmingove[i] = (Walker)Lemmingove[i];
+                            Lemmingove[i].Typ = 1; 
+                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, true, false);
+                            Aktualni = Aktualni.Dalsi;
                             break;
                    
                     }
@@ -337,7 +395,49 @@ namespace TheLems
 
         public void LemmingsClick(Point kde)
         {
+            int[] VKurzoru = new int[AktualniPocetZivichLemmingu];
+            int TempInt = 0; 
+            int KliknutyLemming = -1; //index v poli lemingu
+            Rectangle Kurzor = new Rectangle(kde, new Size(Konstanty.velikostKurzoru, Konstanty.velikostKurzoru));
 
+
+            //Najdi lemmingy v kurzoru
+            for (int i = 0; i < Lemmingove.Length; i++)
+            {
+                if (Lemmingove[i] != null)
+                {
+                    if (Kurzor.Contains(Lemmingove[i].Pozice))
+                    {
+                        VKurzoru[TempInt] = i;
+                        TempInt++;
+                    }
+                }
+            }
+
+            //Najde lemminga nejblizsiho stredu kurzoru
+            double MinVzdalenost = 2 * Konstanty.velikostKurzoru;
+            double vzdalenost;
+
+            for (int i = 0; i < TempInt; i++)
+            {
+                vzdalenost = Math.Sqrt(Math.Pow(Lemmingove[VKurzoru[i]].Pozice.X - kde.X, 2) + Math.Pow(Lemmingove[VKurzoru[i]].Pozice.Y - kde.Y, 2));
+                if (vzdalenost < MinVzdalenost)
+                {
+                    KliknutyLemming = VKurzoru[i];
+                    MinVzdalenost = vzdalenost;
+                }
+            }
+
+            if (KliknutyLemming >= 0)
+                switch (Selected)
+                {
+                    case 1:
+                        break;
+                    case 2://FLOATER
+                        Lemmingove[KliknutyLemming] = (Floater)Lemmingove[KliknutyLemming];
+                        Lemmingove[KliknutyLemming].Typ = 2;
+                        break;
+                }
         }
 
         
