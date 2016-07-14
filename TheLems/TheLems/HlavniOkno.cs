@@ -233,19 +233,11 @@ namespace TheLems
             public int TicksToDetonation;
             public virtual int Move(Bitmap Popredi)//hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec
             {
-                if (Falling > 0)
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
                     return Fall(Popredi);
                 }
                 else
-                {
-                    return Sideways(Popredi);
-                }
-            }
-
-            protected virtual int Fall(Bitmap Popredi)
-            {
-                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
                 {
                     if (Falling > Konstanty.velikostLemaY * 4) //BALANCHRY
                     {
@@ -255,12 +247,14 @@ namespace TheLems
                     {
                         Falling = 0;
                     }
+                    return Sideways(Popredi);
                 }
-                else
-                {
-                    Pozice.Y++;
-                    Falling++;
-                }
+            }
+
+            protected virtual int Fall(Bitmap Popredi)
+            { 
+                Pozice.Y++;
+                Falling++;
                 return 0;
             }
 
@@ -313,7 +307,7 @@ namespace TheLems
 
             public Walker(Lemming Lemming)
             {
-                Typ = 1;
+                Typ = 0;
                 Pozice = Lemming.Pozice;
                 Falling = Lemming.Falling;
                 Smer = Lemming.Smer;
@@ -326,33 +320,31 @@ namespace TheLems
         {
             protected override int Fall(Bitmap Popredi)
             {
-                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
+                if (Falling == 2)
                 {
-                    return 3;
+                    Pozice.Y++;
+                    Falling--;
                 }
                 else
                 {
-                    if (Falling == 2)
-                    {
-                        Pozice.Y++;
-                        Falling--;
-                    }
-                    else
-                    {
-                        Falling++;
-                    }
+                    Falling++;
                 }
                 return 0;
             }
+            
 
             public override int Move(Bitmap Popredi)
             {
-                if (Falling > 0)
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
                     return Fall(Popredi);
                 }
                 else
                 {
+                    if (Falling > 0)
+                    {
+                        return 3;
+                    }
                     return Sideways(Popredi);
                 }
             }
@@ -371,7 +363,7 @@ namespace TheLems
             {
                 Typ = 1;
                 Pozice = Lemming.Pozice;
-                Falling = Lemming.Falling;
+                Falling = 1;
                 Smer = Lemming.Smer;
                 detonate = Lemming.detonate;
                 TicksToDetonation = Lemming.TicksToDetonation;
