@@ -127,9 +127,10 @@ namespace TheLems
             { 
                 switch (PoziceATypy.Typ)
                 {
-                    case 1: Grafika.DrawImage(Lemmings, PoziceATypy.Souradnice.X - 4, PoziceATypy.Souradnice.Y - 10);
+                    case 1: Grafika.DrawImage(Lemmings, PoziceATypy.Souradnice.X - 8, PoziceATypy.Souradnice.Y - 20);
                         break;
                 }
+                PoziceATypy = PoziceATypy.Dalsi;
             }
             Grafika.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Arial",10), Brushes.Black, 50, 50);//FORTESTING
             PictureBox.Refresh();
@@ -217,7 +218,7 @@ namespace TheLems
                 {
                     if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 0)
                     {
-                        if (Falling > 10)
+                        if (Falling > 100)
                         {
                             return 1;
                         }
@@ -237,7 +238,7 @@ namespace TheLems
                     if (Smer != 0 )
                     {
                         int Posun = 0;
-                        for (int i = 10; i >=0; i--)
+                        for (int i = 10; i >= -5; i--)
                         {
                             if  (Popredi.GetPixel(Pozice.X + Smer,Pozice.Y - i).A != 0)
                             {
@@ -248,7 +249,7 @@ namespace TheLems
 
                         if ( Posun < 5) //Velikost lema / 2
                         {
-                            Pozice.X++;
+                            Pozice.X += Smer;
                             Pozice.Y -= Posun;
                         }
                         else
@@ -287,7 +288,7 @@ namespace TheLems
         public ForDrawing Tick() 
         {
             ForDrawing navrat = new ForDrawing(); //Predelat na vraceni jinyho typu
-            
+            ForDrawing Aktualni = navrat;
             //Move
             for (int i = 0; i < Lemmingove.Length; i++)
             {
@@ -295,14 +296,14 @@ namespace TheLems
                     switch (Lemmingove[i].Move(Popredi))
                     {
                         case 0: //Zije
-                            navrat.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, false, false);
-                            navrat = navrat.Dalsi;
+                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, false, false);
+                            Aktualni = Aktualni.Dalsi;
                             break;
 
 
                         case 1: //Spadnul
-                            navrat.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer,true,false);
-                            navrat = navrat.Dalsi;
+                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer,true,false);
+                            Aktualni = Aktualni.Dalsi;
                             Lemmingove[i] = null;//DEATH
                             AktualniPocetZivichLemmingu--;
                         break;
@@ -324,7 +325,8 @@ namespace TheLems
                     Lemmingove[PocetSpawnutych] = TempLemming;
                     PocetSpawnutych++;
                     AktualniPocetZivichLemmingu++;
-                    navrat.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, false);
+                    Aktualni.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, false);
+                    Aktualni = Aktualni.Dalsi;
                 }
             }
             
@@ -349,14 +351,15 @@ namespace TheLems
         public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            Lemmingove = new Lemming[1];
+            Lemmingove = new Lemming[20];
             Selected = 0;
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
 
             //FORTESTING
-            Spawny = new Spawn[1];
+            Spawny = new Spawn[2];
             Spawny[0] = new Spawn(50, new Point(100, 100));
+            Spawny[1] = new Spawn(25, new Point(200, 100));
         }
 
         
