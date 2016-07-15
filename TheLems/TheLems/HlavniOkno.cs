@@ -22,6 +22,7 @@ namespace TheLems
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
         Graphics GrafikaOkna;
+        Point PoziceMysi;
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
 
@@ -58,49 +59,36 @@ namespace TheLems
             GameDraw(PoziceATypy);
         }
 
-        private void PictureBox_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                switch (Stav)
-                {
-                    case State.Menu:
-                        break;
-                    case State.Hra:
-                        Hra.LemmingsClick(e.Location);
-                        break;
-                    case State.Pauza:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (e.Button == MouseButtons.Right)
-            {
-                switch (Stav)
-                {
-                    case State.Menu:
-                        break;
-                    case State.Hra:
-                        Hra.Select(0);
-                        break;
-                    case State.Pauza:
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
 
         // MOJE METODY
 
-        
+
 
 
         private void SwitchToMenu()
         {
 
+        }
+
+        private void PictureBox_MouseUp(object sender, MouseEventArgs e)
+        {
+            switch (Stav)
+            {
+                case State.Menu:
+                    break;
+                case State.Hra:
+                    Hra.LemmingsClick(e.Location);
+                    break;
+                case State.Pauza:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void PictureBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            PoziceMysi = e.Location;      
         }
 
         private void SwitchToGame(string Level)
@@ -141,6 +129,7 @@ namespace TheLems
             GrafikaOkna.Clear(Color.Empty);
             GrafikaOkna.DrawImage(Pozadi, 0, 0);
             GrafikaOkna.DrawImage(Popredi, 0, 0);
+            GrafikaOkna.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysi.X - 5, PoziceMysi.Y - 5, 10, 10));
             while (PoziceATypy != null)
             {
                 if (PoziceATypy.Typ >= 0)
@@ -337,6 +326,7 @@ namespace TheLems
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
+                    Typ = 1;
                     return Fall(Popredi);
                 }
                 else
@@ -361,9 +351,9 @@ namespace TheLems
 
             public Floater(Lemming Lemming)
             {
-                Typ = 1;
+                Typ = 0;
                 Pozice = Lemming.Pozice;
-                Falling = 1;
+                Falling = 0;
                 Smer = Lemming.Smer;
                 detonate = Lemming.detonate;
                 TicksToDetonation = Lemming.TicksToDetonation;
@@ -385,47 +375,48 @@ namespace TheLems
 
 
             //Move
-            for (int i = 0; i < Lemmingove.Length; i++)
-            {
-                if (Lemmingove[i] != null)
-                    switch (Lemmingove[i].Move(Popredi))
-                    {
-                        case 0: //Zije
-                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, false, false);
-                            Aktualni = Aktualni.Dalsi;
-                            break;
+            int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
+            while (Cyklus < AktualniPocetZivichLemmingu)
+            { 
+                switch (Lemmingove[Cyklus].Move(Popredi))
+                {
+                    case 0: //Zije
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, false);
+                        Aktualni = Aktualni.Dalsi;
+                        break;
 
 
-                        case 1: //Spadnul
-                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, true, false);
-                            Aktualni = Aktualni.Dalsi;
-                            Lemmingove[i] = null;//DEATH
-                            AktualniPocetZivichLemmingu--;
-                            break;
+                    case 1: //Spadnul
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, false);
+                        Aktualni = Aktualni.Dalsi;
+                        Lemmingove[Cyklus] = Lemmingove[AktualniPocetZivichLemmingu];//DEATH
+                        Lemmingove[AktualniPocetZivichLemmingu] = null;
+                        AktualniPocetZivichLemmingu--;
+                        continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
-                        case 2: //Detonate
-                            break;
+                    case 2: //Detonate
+                        break;
 
-                        case 3:  //Zmena zpet na Walkera
+                    case 3:  //Zmena zpet na Walkera
                             
-                            Lemmingove[i].Typ = 0;
-                            Lemmingove[i] = new Walker(Lemmingove[i]);
-                            Aktualni.Dalsi = new ForDrawing(Lemmingove[i].Pozice, Lemmingove[i].Typ, Lemmingove[i].Smer, true, false);
-                            Aktualni = Aktualni.Dalsi;
-                            break;
-
-                    }
+                        Lemmingove[Cyklus].Typ = 0;
+                        Lemmingove[Cyklus] = new Walker(Lemmingove[Cyklus]);
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, false);
+                        Aktualni = Aktualni.Dalsi;
+                        break;
+                }
+                Cyklus++;
             }
 
 
             //Spawn
             Lemming TempLemming;
-            for (int i = 0; (PocetSpawnutych < Lemmingove.Length) && (i < Spawny.Length); i++)
+            for (int i = 0; (PocetSpawnutych < Lemmingove.Length) && (i < Spawny.Length); i++) //projde vsechny spawnpojnty, pokud uz nejsou vsichni naspawnovani
             {
                 TempLemming = Spawny[i].Tick();
-                if (TempLemming != null)
+                if (TempLemming != null) //Lemming se spawnul
                 {
-                    Lemmingove[PocetSpawnutych] = TempLemming;
+                    Lemmingove[AktualniPocetZivichLemmingu] = TempLemming;
                     PocetSpawnutych++;
                     AktualniPocetZivichLemmingu++;
                     Aktualni.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, false);
@@ -438,20 +429,23 @@ namespace TheLems
         }
 
 
-        public void LemmingsClick(Point kde)
+        private int[] LemmingoveVKurzoru(Point LevyHorniRoh)
         {
             int[] VKurzoru = new int[AktualniPocetZivichLemmingu];
+            
+            
+            Rectangle Kurzor = new Rectangle(LevyHorniRoh, new Size(Konstanty.velikostKurzoru, Konstanty.velikostKurzoru));
+            Point StredLema;
+
             int TempInt = 0;
-            int KliknutyLemming = -1; //index v poli lemingu
-            Rectangle Kurzor = new Rectangle(kde, new Size(Konstanty.velikostKurzoru, Konstanty.velikostKurzoru));
-
-
             //Najdi lemmingy v kurzoru
             for (int i = 0; i < Lemmingove.Length; i++)
             {
                 if (Lemmingove[i] != null)
                 {
-                    if (Kurzor.Contains(Lemmingove[i].Pozice))
+                    StredLema = Lemmingove[i].Pozice;
+                    StredLema.Offset(0, -Konstanty.velikostLemaY / 2);
+                    if (Kurzor.Contains(StredLema))
                     {
                         VKurzoru[TempInt] = i;
                         TempInt++;
@@ -459,11 +453,21 @@ namespace TheLems
                 }
             }
 
+            return VKurzoru;
+        }
+
+        public void LemmingsClick(Point kde)
+        {
+            kde.Offset(-Konstanty.velikostKurzoru / 2, -Konstanty.velikostKurzoru / 2); //Vycentruje kurzor okolo mysi
+            int KliknutyLemming = -1; //index v poli lemingu
+            int[] VKurzoru = LemmingoveVKurzoru(kde);
+
             //Najde lemminga nejblizsiho stredu kurzoru
             double MinVzdalenost = 2 * Konstanty.velikostKurzoru;
             double vzdalenost;
 
-            for (int i = 0; i < TempInt; i++)
+            int i = 0;
+            while(VKurzoru[i] != 0)
             {
                 vzdalenost = Math.Sqrt(Math.Pow(Lemmingove[VKurzoru[i]].Pozice.X - kde.X, 2) + Math.Pow(Lemmingove[VKurzoru[i]].Pozice.Y - kde.Y, 2));
                 if (vzdalenost < MinVzdalenost)
@@ -471,6 +475,7 @@ namespace TheLems
                     KliknutyLemming = VKurzoru[i];
                     MinVzdalenost = vzdalenost;
                 }
+                i++;
             }
 
             if (KliknutyLemming >= 0)
@@ -480,7 +485,6 @@ namespace TheLems
                         break;
                     case 2://FLOATER
                         Lemmingove[KliknutyLemming] = new Floater(Lemmingove[KliknutyLemming]) ;
-                        Lemmingove[KliknutyLemming].Typ = 1;
                         break;
                 }
         }
@@ -504,7 +508,7 @@ namespace TheLems
             //FORTESTING
             Spawny = new Spawn[2];
             Spawny[0] = new Spawn(50, new Point(100, 100));
-            Spawny[1] = new Spawn(25, new Point(200, 100));
+            Spawny[1] = new Spawn(25, new Point(50, 100));
         }
 
 
