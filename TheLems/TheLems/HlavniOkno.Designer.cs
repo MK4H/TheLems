@@ -29,42 +29,59 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.PictureBox = new System.Windows.Forms.PictureBox();
+            this.PictureBoxGame = new System.Windows.Forms.PictureBox();
             this.Timer = new System.Windows.Forms.Timer(this.components);
-            ((System.ComponentModel.ISupportInitialize)(this.PictureBox)).BeginInit();
+            this.PictureBoxButtons = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.PictureBoxGame)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.PictureBoxButtons)).BeginInit();
             this.SuspendLayout();
             // 
-            // PictureBox
+            // PictureBoxGame
             // 
-            this.PictureBox.Location = new System.Drawing.Point(0, 0);
-            this.PictureBox.Name = "PictureBox";
-            this.PictureBox.Size = new System.Drawing.Size(1280, 768);
-            this.PictureBox.TabIndex = 0;
-            this.PictureBox.TabStop = false;
-            this.PictureBox.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBox_MouseMove);
-            this.PictureBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PictureBox_MouseUp);
+            this.PictureBoxGame.Location = new System.Drawing.Point(0, 0);
+            this.PictureBoxGame.Name = "PictureBoxGame";
+            this.PictureBoxGame.Size = new System.Drawing.Size(1280, 768);
+            this.PictureBoxGame.TabIndex = 0;
+            this.PictureBoxGame.TabStop = false;
+            this.PictureBoxGame.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBoxGame_MouseMove);
+            this.PictureBoxGame.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PictureBoxGame_MouseUp);
             // 
             // Timer
             // 
             this.Timer.Tick += new System.EventHandler(this.Timer_Tick);
+            // 
+            // PictureBoxButtons
+            // 
+            this.PictureBoxButtons.Location = new System.Drawing.Point(0, 774);
+            this.PictureBoxButtons.Name = "PictureBoxButtons";
+            this.PictureBoxButtons.Size = new System.Drawing.Size(860, 258);
+            this.PictureBoxButtons.TabIndex = 1;
+            this.PictureBoxButtons.TabStop = false;
+            this.PictureBoxButtons.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PictureBoxButtons_MouseUp);
             // 
             // HlavniOkno
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1902, 1033);
-            this.Controls.Add(this.PictureBox);
+            this.Controls.Add(this.PictureBoxButtons);
+            this.Controls.Add(this.PictureBoxGame);
             this.Name = "HlavniOkno";
             this.Text = "MK Lemmings";
-            ((System.ComponentModel.ISupportInitialize)(this.PictureBox)).EndInit();
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.HlavniOkno_KeyDown);
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.HlavniOkno_KeyPress);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.HlavniOkno_KeyUp);
+            ((System.ComponentModel.ISupportInitialize)(this.PictureBoxGame)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.PictureBoxButtons)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.PictureBox PictureBox;
+        private System.Windows.Forms.PictureBox PictureBoxGame;
         private System.Windows.Forms.Timer Timer;
+        private System.Windows.Forms.PictureBox PictureBoxButtons;
     }
 }
 

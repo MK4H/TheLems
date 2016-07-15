@@ -18,11 +18,13 @@ namespace TheLems
         Point[] MenuCoordinates;
         enum State { Menu, Hra, Pauza }
         State Stav;
-        Bitmap ToPictureBox, Popredi, Pozadi;
+        int OKolik = 5; //Pro eventy s klavesnici , posun
+        Bitmap ToPictureBoxGame, Popredi, Pozadi, TlacitkaUp;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
-        Graphics GrafikaOkna;
-        Point PoziceMysi;
+        Graphics GrafikaGame, GrafikaButtons;
+        Point PoziceMysiObrazovka;
+        Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
 
@@ -30,11 +32,24 @@ namespace TheLems
         {
             InitializeComponent();
 
-            this.ClientSize = new Size(PictureBox.Width, PictureBox.Height);
+            
 
-            ToPictureBox = new Bitmap(1280, 768);
-            GrafikaOkna = Graphics.FromImage(ToPictureBox);
-            PictureBox.Image = ToPictureBox;
+            ToPictureBoxGame = new Bitmap(1280, 648);
+            GrafikaGame = Graphics.FromImage(ToPictureBoxGame);
+            PictureBoxGame.Image = ToPictureBoxGame;
+            PictureBoxGame.Height = ToPictureBoxGame.Height;
+            PictureBoxGame.Width = ToPictureBoxGame.Width;
+
+            PictureBoxButtons.Left = 0;
+            PictureBoxButtons.Top = 648;
+
+            PictureBoxButtons.Height = 120;
+            PictureBoxButtons.Width = 840;
+
+
+            this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxButtons.Height);
+            
+
 
             Stav = State.Menu;
 
@@ -46,10 +61,7 @@ namespace TheLems
 
 
         //AUTOMATICKE METODY
-        private void PictureBox_Click(object sender, EventArgs e)
-        {
-
-        }
+        
 
         private void Timer_Tick(object sender, EventArgs e)
         {
@@ -59,24 +71,20 @@ namespace TheLems
             GameDraw(PoziceATypy);
         }
 
-
-        // MOJE METODY
-
-
-
-
-        private void SwitchToMenu()
+        private void PictureBoxGame_MouseMove(object sender, MouseEventArgs e)
         {
+            PoziceMysiObrazovka = e.Location;
 
         }
 
-        private void PictureBox_MouseUp(object sender, MouseEventArgs e)
+        private void PictureBoxGame_MouseUp(object sender, MouseEventArgs e)
         {
             switch (Stav)
             {
                 case State.Menu:
                     break;
                 case State.Hra:
+                    e.Location.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
                     Hra.LemmingsClick(e.Location);
                     break;
                 case State.Pauza:
@@ -86,9 +94,129 @@ namespace TheLems
             }
         }
 
-        private void PictureBox_MouseMove(object sender, MouseEventArgs e)
+        
+
+        private void HlavniOkno_KeyDown(object sender, KeyEventArgs e)
         {
-            PoziceMysi = e.Location;      
+            if (e.Shift)
+                OKolik = 1;
+            else
+                OKolik = 5;
+
+            switch (e.KeyCode)
+            {
+                case Keys.D0:
+                    Hra.Selected = 0;
+                    break;
+                case Keys.D1:
+                    Hra.Selected = 1;
+                    break;
+                case Keys.D2:
+                    Hra.Selected = 2;
+                    break;
+                case Keys.D3:
+                    Hra.Selected = 3;
+                    break;
+                case Keys.D4:
+                    Hra.Selected = 4;
+                    break;
+                case Keys.D5:
+                    Hra.Selected = 5;
+                    break;
+                case Keys.D6:
+                    Hra.Selected = 6;
+                    break;
+                case Keys.D7:
+                    Hra.Selected = 7;
+                    break;
+                case Keys.D8:
+                    Hra.Selected = 8;
+                    break;
+                case Keys.D9:
+                    Hra.Selected = 9;
+                    break;
+            }
+
+
+        }
+
+        private void HlavniOkno_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Shift)
+                OKolik = 5;
+            else
+                OKolik = 1;
+        }
+
+        private void HlavniOkno_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            switch (e.KeyChar)
+            {
+                case 'w':
+                    MoveZobrazenyRect(0, -OKolik);
+                    break;
+                case 'W':
+                    MoveZobrazenyRect(0, -OKolik);
+                    break;
+                case 's':
+                    MoveZobrazenyRect(0, OKolik);
+                    break;
+                case 'S':
+                    MoveZobrazenyRect(0, OKolik);
+                    break;
+                case 'a':
+                    MoveZobrazenyRect(-OKolik, 0);
+                    break;
+                case 'A':
+                    MoveZobrazenyRect(-OKolik, 0);
+                    break;
+                case 'd':
+                    MoveZobrazenyRect(OKolik, 0);
+                    break;
+                case 'D':
+                    MoveZobrazenyRect(OKolik, 0);
+                    break;
+            }
+        }
+
+        private void PictureBoxButtons_MouseUp(object sender, MouseEventArgs e)
+        {
+            int KliknutyPole = 0;
+
+            if (e.Button == MouseButtons.Left)
+            {
+                for (int i = 1; i <= 12; i++)
+                {
+                    if (e.X < (70 * i))
+                    {
+                        KliknutyPole = i;
+                        break;
+                    }
+                }
+
+                switch (KliknutyPole)
+                {
+                    case 0:
+                        throw new Exception();
+                    case 1:
+                        Hra.ZmenaRychostiSpawnu(-1);
+                        break;
+                    case 2:
+                        Hra.ZmenaRychostiSpawnu(1);
+                        break;
+                    default:
+                        Hra.Selected = KliknutyPole - 3;
+                        break;
+                }
+            }
+        }
+
+
+        // MOJE METODY
+
+        private void SwitchToMenu()
+        {
+
         }
 
         private void SwitchToGame(string Level)
@@ -100,20 +228,30 @@ namespace TheLems
                 case State.Menu:
                     //Menu.Dispose();
                     Stav = State.Hra;
-                    Bitmap TempBMP;
+                    PictureBoxGame.Show();
+                    PictureBoxButtons.Show();
+                    
 
                     Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
+                    TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
+
+                    PictureBoxButtons.Image = TlacitkaUp;
+                    GrafikaButtons = Graphics.FromImage(TlacitkaUp);
+
+                    Bitmap TempBMP;
                     TempBMP = new Bitmap(@"Animations\TriZidiTest.png");
                     ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
-
                     for (int i = 0; i < ObrazkyLemmu.Length; i++)
                     {
                         ObrazkyLemmu[i] = TempBMP.Clone(new Rectangle(0, i * Konstanty.velikostLemaY, Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
                     }
 
+                    ZobrazenaCast = new Rectangle(0, 0, 1280, 500); //FORTESTING
+
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
-                    Hra.Select(2);
+                    Hra.Selected = 1;
+                    ButtonDraw();
 
                     Timer.Start();
                     break;
@@ -124,23 +262,65 @@ namespace TheLems
             }
         }
 
+        
+
         private void GameDraw(ForDrawing PoziceATypy)
         {
-            GrafikaOkna.Clear(Color.Empty);
-            GrafikaOkna.DrawImage(Pozadi, 0, 0);
-            GrafikaOkna.DrawImage(Popredi, 0, 0);
-            GrafikaOkna.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysi.X - 5, PoziceMysi.Y - 5, 10, 10));
-            while (PoziceATypy != null)
-            {
-                if (PoziceATypy.Typ >= 0)
-                    GrafikaOkna.DrawImage(ObrazkyLemmu[PoziceATypy.Typ], PoziceATypy.Souradnice.X - (Konstanty.velikostLemaX / 2), PoziceATypy.Souradnice.Y - Konstanty.velikostLemaY);
+            
 
+            CheckMousePosition(); // nacteni lemmingu v kurzoru
+
+            GrafikaGame.Clear(Color.Black);
+            GrafikaGame.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGame.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGame.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysiObrazovka.X - 5, PoziceMysiObrazovka.Y - 5, 10, 10)); //FORTESTING
+
+            int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
+
+            while (PoziceATypy != null) //Projet spojak
+            {
+                PoziceLemmaObrazovkaX = PoziceATypy.Souradnice.X - ZobrazenaCast.X;
+                if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width)) //Vyradit lemy mimo zobrazenou plochu
+                {
+                    PoziceLemmaObrazovkaY = PoziceATypy.Souradnice.Y - ZobrazenaCast.Y;
+                    if ((PoziceLemmaObrazovkaY > 0) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
+                    {
+                        if (PoziceATypy.Typ >= 0)
+                            GrafikaGame.DrawImage(ObrazkyLemmu[PoziceATypy.Typ], PoziceLemmaObrazovkaX - (Konstanty.velikostLemaX / 2), PoziceLemmaObrazovkaY - Konstanty.velikostLemaY);
+                    }
+                }
+                
 
                 PoziceATypy = PoziceATypy.Dalsi;
             }
-            GrafikaOkna.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Arial", 10), Brushes.Black, 50, 50);//FORTESTING
-            PictureBox.Refresh();
+            GrafikaGame.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
+            GrafikaGame.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
+            PictureBoxGame.Refresh();
             UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
+        }
+
+
+        private void ButtonDraw()
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                GrafikaButtons.DrawString(Hra.GetMaxMinRychlostSpawnu_ZbyvajiciItemy(i).ToString(), new Font("Verdana", 10,FontStyle.Bold), Brushes.White, 30 + 70 * i, 35);
+            }    
+            PictureBoxButtons.Refresh();
+        }
+
+        private void CheckMousePosition() //Get Lemmingy v kurzoru
+        {
+            
+        }
+
+        private void MoveZobrazenyRect(int x, int y)
+        {
+            if ((ZobrazenaCast.Right + x <= Pozadi.Width) && (ZobrazenaCast.Left + x >= 0))
+                ZobrazenaCast.X += x;
+
+            if ((ZobrazenaCast.Bottom + y <= Pozadi.Height) && (ZobrazenaCast.Top + y >= 0))
+                ZobrazenaCast.Y += y;
         }
     }
 
@@ -184,9 +364,15 @@ namespace TheLems
 
         class Spawn
         {
+            int MaxRychlostSpawnu;
             int DobaMeziSpawny;
             int TickOdPredchozihoSpawnu;
             public Point Souradnice;
+
+            public void ZmenaRychlosti(int NaCo)
+            {
+                DobaMeziSpawny = Convert.ToInt32(Math.Round((Convert.ToDouble(NaCo) / 100) * MaxRychlostSpawnu));   
+            }
 
             public Lemming Tick()
             {
@@ -202,9 +388,10 @@ namespace TheLems
             }
 
 
-            public Spawn(int DobaMeziSpawny, Point Souradnice)
+            public Spawn(int MaxRychlostSpawnu, Point Souradnice)
             {
-                this.DobaMeziSpawny = DobaMeziSpawny;
+                this.MaxRychlostSpawnu = MaxRychlostSpawnu;
+                this.DobaMeziSpawny = MaxRychlostSpawnu;
                 this.Souradnice = Souradnice;
                 TickOdPredchozihoSpawnu = -1; //Mozne pridat delay pred prvnim spawnem
             }
@@ -363,9 +550,11 @@ namespace TheLems
         Lemming[] Lemmingove;
         Spawn[] Spawny;
         Bitmap Popredi;
-        int Selected;
+        int[] ZbyvajiciItemy;
+        public int Selected; //TODO PRIDAT GET,SET
         int AktualniPocetZivichLemmingu;
         int PocetSpawnutych;
+        int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
 
 
         public ForDrawing Tick()
@@ -429,73 +618,102 @@ namespace TheLems
         }
 
 
-        private int[] LemmingoveVKurzoru(Point LevyHorniRoh)
+        private int[] LemmingoveVKurzoru(Point StredKurzoru)
         {
-            int[] VKurzoru = new int[AktualniPocetZivichLemmingu];
-            
-            
+            int[] VKurzoru = new int[AktualniPocetZivichLemmingu + 1];
+            Point LevyHorniRoh = StredKurzoru;
+            LevyHorniRoh.Offset(-Konstanty.velikostKurzoru / 2, -Konstanty.velikostKurzoru / 2); //Vycentruje kurzor okolo mysi
             Rectangle Kurzor = new Rectangle(LevyHorniRoh, new Size(Konstanty.velikostKurzoru, Konstanty.velikostKurzoru));
             Point StredLema;
 
             int TempInt = 0;
             //Najdi lemmingy v kurzoru
-            for (int i = 0; i < Lemmingove.Length; i++)
+            for (int i = 0; i < AktualniPocetZivichLemmingu; i++)
             {
-                if (Lemmingove[i] != null)
+                StredLema = Lemmingove[i].Pozice;
+                StredLema.Offset(0, -Konstanty.velikostLemaY / 2);
+                if (Kurzor.Contains(StredLema))
                 {
-                    StredLema = Lemmingove[i].Pozice;
-                    StredLema.Offset(0, -Konstanty.velikostLemaY / 2);
-                    if (Kurzor.Contains(StredLema))
-                    {
-                        VKurzoru[TempInt] = i;
-                        TempInt++;
-                    }
-                }
+                    VKurzoru[TempInt] = i;
+                    TempInt++;
+                }  
             }
+
+            VKurzoru[TempInt] = -1; //Zarazka
+
+            //Presunuti minimalni vzdalenosti na pozici 0
+            //Najde lemminga nejblizsiho stredu kurzoru
+            double MinVzdalenost = Konstanty.velikostKurzoru*2;
+            double Vzdalenost;
+            int MinIndex = 0;
+            int j = 0;
+            while (VKurzoru[j] != -1)
+            {
+                Vzdalenost = Math.Sqrt((Lemmingove[VKurzoru[j]].Pozice.X - StredKurzoru.X) * (Lemmingove[VKurzoru[j]].Pozice.X - StredKurzoru.X) + (Lemmingove[VKurzoru[j]].Pozice.Y - StredKurzoru.Y) * (Lemmingove[VKurzoru[j]].Pozice.Y - StredKurzoru.Y));
+                if (Vzdalenost < MinVzdalenost)
+                {
+                    MinVzdalenost = Vzdalenost;
+                    MinIndex = j;
+                }
+                j++;
+            }
+
+            TempInt = VKurzoru[0]; //Recyklace TempIntu, kterej uz stejne nic nenesl
+            VKurzoru[0] = VKurzoru[MinIndex];
+            VKurzoru[MinIndex] = TempInt;
+            
 
             return VKurzoru;
         }
 
-        public void LemmingsClick(Point kde)
+        public void LemmingsClick(Point PoziceMysivMape)
         {
-            kde.Offset(-Konstanty.velikostKurzoru / 2, -Konstanty.velikostKurzoru / 2); //Vycentruje kurzor okolo mysi
             int KliknutyLemming = -1; //index v poli lemingu
-            int[] VKurzoru = LemmingoveVKurzoru(kde);
+            int[] VKurzoru = LemmingoveVKurzoru(PoziceMysivMape);
 
-            //Najde lemminga nejblizsiho stredu kurzoru
-            double MinVzdalenost = 2 * Konstanty.velikostKurzoru;
-            double vzdalenost;
-
-            int i = 0;
-            while(VKurzoru[i] != 0)
+            if (VKurzoru[0] != -1)
             {
-                vzdalenost = Math.Sqrt(Math.Pow(Lemmingove[VKurzoru[i]].Pozice.X - kde.X, 2) + Math.Pow(Lemmingove[VKurzoru[i]].Pozice.Y - kde.Y, 2));
-                if (vzdalenost < MinVzdalenost)
-                {
-                    KliknutyLemming = VKurzoru[i];
-                    MinVzdalenost = vzdalenost;
-                }
-                i++;
+                KliknutyLemming = VKurzoru[0];
             }
-
+            
             if (KliknutyLemming >= 0)
                 switch (Selected)
                 {
-                    case 1:
+                    case 0:
                         break;
-                    case 2://FLOATER
+                    case 1://FLOATER
                         Lemmingove[KliknutyLemming] = new Floater(Lemmingove[KliknutyLemming]) ;
                         break;
                 }
         }
 
-
-
-        public void Select(int co)
+        public int GetMaxMinRychlostSpawnu_ZbyvajiciItemy(int Ktery)
         {
-            Selected = co;
+            switch (Ktery - 2)
+            {
+                case -2:
+                    return MinRychlostSpawnu;
+                case -1:
+                    return MaxRychlostSpawnu;
+                default:
+                    return ZbyvajiciItemy[Ktery - 2];
+            }
         }
+        
 
+        public void ZmenaRychostiSpawnu(int OKolik)
+        {
+            AktRychlostSpawnu += OKolik;
+            if (AktRychlostSpawnu < MinRychlostSpawnu)
+                AktRychlostSpawnu = MinRychlostSpawnu;
+            if (AktRychlostSpawnu > MaxRychlostSpawnu)
+                AktRychlostSpawnu = MaxRychlostSpawnu;
+
+            for (int i = 0; i < Spawny.Length; i++)
+            {
+                Spawny[i].ZmenaRychlosti(AktRychlostSpawnu);
+            }
+        }
 
         public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
@@ -504,6 +722,10 @@ namespace TheLems
             Selected = 0;
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
+            MaxRychlostSpawnu = 100;
+            MinRychlostSpawnu = 0;
+            AktRychlostSpawnu = 100;
+            ZbyvajiciItemy = new int[10];
 
             //FORTESTING
             Spawny = new Spawn[2];
