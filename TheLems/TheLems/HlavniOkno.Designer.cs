@@ -57,6 +57,7 @@
             this.PictureBoxButtons.Size = new System.Drawing.Size(860, 258);
             this.PictureBoxButtons.TabIndex = 1;
             this.PictureBoxButtons.TabStop = false;
+            this.PictureBoxButtons.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.PictureBoxButtons_MouseDoubleClick);
             this.PictureBoxButtons.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PictureBoxButtons_MouseUp);
             // 
             // HlavniOkno

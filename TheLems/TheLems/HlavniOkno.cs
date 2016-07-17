@@ -78,23 +78,11 @@ namespace TheLems
         }
 
         private void PictureBoxGame_MouseUp(object sender, MouseEventArgs e)
-        {
-            switch (Stav)
-            {
-                case State.Menu:
-                    break;
-                case State.Hra:
-                    e.Location.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
-                    Hra.LemmingsClick(e.Location);
-                    break;
-                case State.Pauza:
-                    break;
-                default:
-                    break;
-            }
+        { 
+            e.Location.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
+            Hra.LemmingsClick(e.Location);
+            ButtonDraw();
         }
-
-        
 
         private void HlavniOkno_KeyDown(object sender, KeyEventArgs e)
         {
@@ -208,6 +196,34 @@ namespace TheLems
                         Hra.Selected = KliknutyPole - 3;
                         break;
                 }
+
+                ButtonDraw();
+            }
+        }
+
+        private void PictureBoxButtons_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            int KliknutyPole = 0;
+            for (int i = 1; i <= 12; i++)
+            {
+                if (e.X < (70 * i))
+                {
+                    KliknutyPole = i;
+                    break;
+                }
+            }
+
+            switch (KliknutyPole)
+            {
+                case 1:
+                    Hra.ZmenaRychostiSpawnu(-100);
+                    break;
+                case 2:
+                    Hra.ZmenaRychostiSpawnu(100);
+                    break;
+                case 12:
+                    Hra.KaBOOOM();
+                    break;
             }
         }
 
@@ -244,7 +260,8 @@ namespace TheLems
                     ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
                     for (int i = 0; i < ObrazkyLemmu.Length; i++)
                     {
-                        ObrazkyLemmu[i] = TempBMP.Clone(new Rectangle(0, i * Konstanty.velikostLemaY, Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
+                        ObrazkyLemmu[i] = TempBMP.Clone(new Rectangle(0, i * Konstanty.velikostLemaY, 
+                            Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
                     }
 
                     ZobrazenaCast = new Rectangle(0, 0, 1280, 500); //FORTESTING
@@ -264,7 +281,7 @@ namespace TheLems
 
         
 
-        private void GameDraw(ForDrawing PoziceATypy)
+        private void GameDraw(ForDrawing DrawInfo)
         {
             
 
@@ -277,21 +294,36 @@ namespace TheLems
 
             int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
 
-            while (PoziceATypy != null) //Projet spojak
+            while (DrawInfo != null) //Projet spojak
             {
-                PoziceLemmaObrazovkaX = PoziceATypy.Souradnice.X - ZobrazenaCast.X;
-                if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width)) //Vyradit lemy mimo zobrazenou plochu
+                //Pozice leveho horniho rohu lemma
+                PoziceLemmaObrazovkaX = DrawInfo.Souradnice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
+                //Vyradit lemy mimo zobrazenou plochu
+                if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width)) 
                 {
-                    PoziceLemmaObrazovkaY = PoziceATypy.Souradnice.Y - ZobrazenaCast.Y;
+                    //Pozice leveho horniho rohu lemma
+                    PoziceLemmaObrazovkaY = DrawInfo.Souradnice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
                     if ((PoziceLemmaObrazovkaY > 0) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
                     {
-                        if (PoziceATypy.Typ >= 0)
-                            GrafikaGame.DrawImage(ObrazkyLemmu[PoziceATypy.Typ], PoziceLemmaObrazovkaX - (Konstanty.velikostLemaX / 2), PoziceLemmaObrazovkaY - Konstanty.velikostLemaY);
+                        if (DrawInfo.Typ >= 0)
+                        {
+                            //Nakreslit Lemma
+                            GrafikaGame.DrawImage(ObrazkyLemmu[DrawInfo.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
+
+                            //Pripadne nakreslit cas do detonace
+                            if (DrawInfo.TicksToDetonation > 0)
+                                GrafikaGame.DrawString(
+                                    Math.Ceiling(Convert.ToDouble(DrawInfo.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
+                                    new Font("Verdana", 10), Brushes.White,
+                                    PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY - 20);
+                        }
+
+                            
                     }
                 }
                 
 
-                PoziceATypy = PoziceATypy.Dalsi;
+                DrawInfo = DrawInfo.Dalsi;
             }
             GrafikaGame.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
             GrafikaGame.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
@@ -302,9 +334,14 @@ namespace TheLems
 
         private void ButtonDraw()
         {
-            for (int i = 0; i < 12; i++)
+            string AktString;
+            Font FontProKresleni = new Font("Verdana", 10, FontStyle.Bold);
+
+            for (int i = 0; i < 10; i++) //Prvnich 10 s pocitadlem
             {
-                GrafikaButtons.DrawString(Hra.GetMaxMinRychlostSpawnu_ZbyvajiciItemy(i).ToString(), new Font("Verdana", 10,FontStyle.Bold), Brushes.White, 30 + 70 * i, 35);
+                AktString = Hra.GetMinAktRychlostSpawnu_ZbyvajiciItemy(i).ToString();
+                GrafikaButtons.FillRectangle(Brushes.Black,new Rectangle(10 + 70*i,30,49,29));
+                GrafikaButtons.DrawString(AktString,FontProKresleni , Brushes.White, 30 + 70 * i, 35);
             }    
             PictureBoxButtons.Refresh();
         }
@@ -330,16 +367,16 @@ namespace TheLems
         public int Typ;
         public int Smer;
         public bool Death;
-        public bool detonation;
+        public int TicksToDetonation;
         public ForDrawing Dalsi;
 
-        public ForDrawing(Point Souradnice, int Typ, int Smer, bool Death, bool detonation)
+        public ForDrawing(Point Souradnice, int Typ, int Smer, bool Death, int TicksToDetonation)
         {
             this.Souradnice = Souradnice;
             this.Typ = Typ;
             this.Smer = Smer;
             this.Death = Death;
-            this.detonation = detonation;
+            this.TicksToDetonation = TicksToDetonation;
             Dalsi = null;
         }
 
@@ -371,7 +408,7 @@ namespace TheLems
 
             public void ZmenaRychlosti(int NaCo)
             {
-                DobaMeziSpawny = Convert.ToInt32(Math.Round((Convert.ToDouble(NaCo) / 100) * MaxRychlostSpawnu));   
+                DobaMeziSpawny = Convert.ToInt32(Math.Round(MaxRychlostSpawnu * (100 / Convert.ToDouble(NaCo))));   
             }
 
             public Lemming Tick()
@@ -386,7 +423,6 @@ namespace TheLems
                     return null;
                 }
             }
-
 
             public Spawn(int MaxRychlostSpawnu, Point Souradnice)
             {
@@ -406,8 +442,24 @@ namespace TheLems
             public int Falling;
             public int Smer;
             public bool detonate;
-            public int TicksToDetonation;
-            public virtual int Move(Bitmap Popredi)//hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec
+            protected int _TicksToDetonation;
+            public int TicksToDetonation { get { return _TicksToDetonation; } protected set { _TicksToDetonation = value; } }
+
+            public int Tick(Bitmap Popredi)
+            {
+                if(detonate)
+                {
+                    if (TicksToDetonation-- == 0)
+                    {
+                        return 2;
+                    }
+                }
+
+                return Move(Popredi);
+
+            }
+            //hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec, 4 - otocil se
+            protected virtual int Move(Bitmap Popredi)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
@@ -439,11 +491,11 @@ namespace TheLems
                 if (Smer != 0)
                 {
                     int Posun = 0;
-                    for (int i = Konstanty.velikostLemaY; i >= -Konstanty.velikostLemaY / 2; i--) //VELIKOSTLEMA
+                    for (int i = Konstanty.velikostLemaY; i >= -Konstanty.velikostLemaY / 2; i--) 
                     {
                         if (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A != 0)
                         {
-                            Posun = i;
+                            Posun = i + 1;
                             break;
                         }
                     }
@@ -456,6 +508,7 @@ namespace TheLems
                     else
                     {
                         Smer = Smer * (-1);
+                        return 4;
                     }
                 }
 
@@ -466,7 +519,29 @@ namespace TheLems
                 return 0;
             }
 
-            
+            public bool Detonate(int ZaJakDlouho)//Pro global detonate
+            {
+                if (!detonate)
+                {
+                    detonate = true;
+                    TicksToDetonation = ZaJakDlouho;
+                    return true;
+                }
+                else
+                    return false;
+            }
+
+            public bool Detonate() //Vraci true pokud se povedlo, tedy jeste nemel vybuchnout
+            {
+                if (!detonate)
+                {
+                    detonate = true;
+                    TicksToDetonation = 5 * 1000 / Konstanty.Rychlosthry; //chci aby to bylo 5 sekund
+                    return true;
+                }
+                else
+                    return false;
+            }
         }
 
         class Walker : Lemming
@@ -478,10 +553,76 @@ namespace TheLems
                 this.Falling = Falling;
                 this.Smer = Smer;
                 this.detonate = detonate;
-                TicksToDetonation = 5 * 1000 / Konstanty.Rychlosthry; //5 sekund
+                TicksToDetonation = -1;
             }
 
             public Walker(Lemming Lemming)
+            {
+                Typ = 0;
+                Pozice = Lemming.Pozice;
+                Falling = Lemming.Falling;
+                Smer = Lemming.Smer;
+                detonate = Lemming.detonate;
+                TicksToDetonation = Lemming.TicksToDetonation;
+            }
+        }
+
+        class Climber : Lemming
+        {
+
+            private int MoveUp(Bitmap Popredi)
+            {
+                if (Popredi.GetPixel(Pozice.X, Pozice.Y - Konstanty.velikostLemaY/2 - 1).A != 0) //- protoze nahoru
+                {
+                    return 3;
+                }
+
+
+                for (int i = Konstanty.velikostLemaY / 2; i >= 0 ; i--)
+                {
+                    if (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A == 0)
+                    {
+                        Pozice.X += Smer;
+                        Pozice.Y -= i;
+                        return 3;
+                    }
+                }
+
+                Pozice.Y--;
+                return 0;
+
+            }
+
+            protected override int Move(Bitmap Popredi)
+            {
+                if (Typ == 0)
+                {
+                    int Navrat = base.Move(Popredi);
+                    if (Navrat == 4)
+                    {
+                        Typ = 1;
+                        Smer *= -1;
+                    }
+
+                    return Navrat;
+                }
+                else
+                {
+                    return MoveUp(Popredi);
+                }
+            }
+
+            public Climber(Point Pozice, int Falling, int Smer, bool detonate)
+            {
+                Typ = 1;
+                this.Pozice = Pozice;
+                this.Falling = Falling;
+                this.Smer = Smer;
+                this.detonate = detonate;
+                TicksToDetonation = -1;
+            }
+
+            public Climber(Lemming Lemming)
             {
                 Typ = 0;
                 Pozice = Lemming.Pozice;
@@ -509,11 +650,11 @@ namespace TheLems
             }
             
 
-            public override int Move(Bitmap Popredi)
+            protected override int Move(Bitmap Popredi)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
-                    Typ = 1;
+                    Typ = 2;
                     return Fall(Popredi);
                 }
                 else
@@ -528,71 +669,95 @@ namespace TheLems
 
             public Floater(Point Pozice, int Falling, int Smer, bool detonate)
             {
-                Typ = 1;
+                Typ = 2;
                 this.Pozice = Pozice;
                 this.Falling = Falling;
                 this.Smer = Smer;
                 this.detonate = detonate;
-                TicksToDetonation = 5 * 1000 / Konstanty.Rychlosthry; //5 sekund
+                TicksToDetonation = -1;
             }
 
             public Floater(Lemming Lemming)
             {
                 Typ = 0;
                 Pozice = Lemming.Pozice;
-                Falling = 0;
+                Falling = 0; //Tomuhle je to vlastne jedno
                 Smer = Lemming.Smer;
                 detonate = Lemming.detonate;
                 TicksToDetonation = Lemming.TicksToDetonation;
             }
         }
 
+        
         Lemming[] Lemmingove;
         Spawn[] Spawny;
         Bitmap Popredi;
         int[] ZbyvajiciItemy;
-        public int Selected; //TODO PRIDAT GET,SET
+        public int Selected; //Zvoleny button
         int AktualniPocetZivichLemmingu;
         int PocetSpawnutych;
         int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
-
+        int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
 
         public ForDrawing Tick()
         {
             ForDrawing navrat = new ForDrawing();
             ForDrawing Aktualni = navrat;
 
+            //TODO Global BOOM 
+            int Cyklus = 0;
+            if (BOOOOM >= 0 && BOOOOM < AktualniPocetZivichLemmingu)
+            {
+                
 
+            }
+
+            
+            
             //Move
-            int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
+            Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
             while (Cyklus < AktualniPocetZivichLemmingu)
             { 
-                switch (Lemmingove[Cyklus].Move(Popredi))
+                switch (Lemmingove[Cyklus].Tick(Popredi))
                 {
                     case 0: //Zije
-                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, false);
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, 
+                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
                         break;
 
 
                     case 1: //Spadnul
-                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, false);
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
+                            Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
-                        Lemmingove[Cyklus] = Lemmingove[AktualniPocetZivichLemmingu];//DEATH
+                        Lemmingove[Cyklus] = Lemmingove[--AktualniPocetZivichLemmingu];//DEATH
                         Lemmingove[AktualniPocetZivichLemmingu] = null;
-                        AktualniPocetZivichLemmingu--;
                         continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
                     case 2: //Detonate
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
+                            Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
+                        Aktualni = Aktualni.Dalsi;
+                        Lemmingove[Cyklus] = Lemmingove[--AktualniPocetZivichLemmingu];//DEATH
+                        Lemmingove[AktualniPocetZivichLemmingu] = null;
                         break;
 
                     case 3:  //Zmena zpet na Walkera
                             
                         Lemmingove[Cyklus].Typ = 0;
                         Lemmingove[Cyklus] = new Walker(Lemmingove[Cyklus]);
-                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, false);
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, 
+                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
                         break;
+
+                    case 4: //Otocil se, signal pro climbera, tady nic nemeni oproti walkerovi
+                        Aktualni.Dalsi = new ForDrawing(Lemmingove[Cyklus].Pozice, 
+                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
+                        Aktualni = Aktualni.Dalsi;
+                        break;
+
                 }
                 Cyklus++;
             }
@@ -600,7 +765,8 @@ namespace TheLems
 
             //Spawn
             Lemming TempLemming;
-            for (int i = 0; (PocetSpawnutych < Lemmingove.Length) && (i < Spawny.Length); i++) //projde vsechny spawnpojnty, pokud uz nejsou vsichni naspawnovani
+            //projde vsechny spawnpojnty, pokud uz nejsou vsichni naspawnovani
+            for (int i = 0; (PocetSpawnutych < Lemmingove.Length) && (i < Spawny.Length); i++) 
             {
                 TempLemming = Spawny[i].Tick();
                 if (TempLemming != null) //Lemming se spawnul
@@ -608,15 +774,14 @@ namespace TheLems
                     Lemmingove[AktualniPocetZivichLemmingu] = TempLemming;
                     PocetSpawnutych++;
                     AktualniPocetZivichLemmingu++;
-                    Aktualni.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, false);
+                    Aktualni.Dalsi = new ForDrawing(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, Lemmingove[Cyklus].TicksToDetonation);
                     Aktualni = Aktualni.Dalsi;
                 }
             }
 
-
+            
             return navrat;
         }
-
 
         private int[] LemmingoveVKurzoru(Point StredKurzoru)
         {
@@ -675,31 +840,53 @@ namespace TheLems
             {
                 KliknutyLemming = VKurzoru[0];
             }
-            
+
             if (KliknutyLemming >= 0)
-                switch (Selected)
+                if (ZbyvajiciItemy[Selected] > 0)
                 {
-                    case 0:
-                        break;
-                    case 1://FLOATER
-                        Lemmingove[KliknutyLemming] = new Floater(Lemmingove[KliknutyLemming]) ;
-                        break;
+                    switch (Selected)
+                    {
+                        case 0://Climber
+                            if (!(Lemmingove[KliknutyLemming] is Climber)) //Pro zamezeni vice kiku na jednoho
+                            {
+                                Lemmingove[KliknutyLemming] = new Climber(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
+                        case 1://FLOATER
+                            if (!(Lemmingove[KliknutyLemming] is Floater)) //Pro zamezeni vice kiku na jednoho
+                            {
+                                Lemmingove[KliknutyLemming] = new Floater(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
+                        case 2://DETONATE
+                            if (Lemmingove[KliknutyLemming].Detonate()) //Pro zamezeni vice kiku na jednoho
+                            {
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
+                    }
                 }
         }
 
-        public int GetMaxMinRychlostSpawnu_ZbyvajiciItemy(int Ktery)
+        public int GetMinAktRychlostSpawnu_ZbyvajiciItemy(int Ktery)
         {
             switch (Ktery - 2)
             {
                 case -2:
                     return MinRychlostSpawnu;
                 case -1:
-                    return MaxRychlostSpawnu;
+                    return AktRychlostSpawnu;
                 default:
                     return ZbyvajiciItemy[Ktery - 2];
             }
         }
-        
+
+        public void KaBOOOM()
+        {
+            BOOOOM = 0;
+        }
 
         public void ZmenaRychostiSpawnu(int OKolik)
         {
@@ -708,6 +895,7 @@ namespace TheLems
                 AktRychlostSpawnu = MinRychlostSpawnu;
             if (AktRychlostSpawnu > MaxRychlostSpawnu)
                 AktRychlostSpawnu = MaxRychlostSpawnu;
+            
 
             for (int i = 0; i < Spawny.Length; i++)
             {
@@ -723,14 +911,21 @@ namespace TheLems
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
             MaxRychlostSpawnu = 100;
-            MinRychlostSpawnu = 0;
+            MinRychlostSpawnu = 20;
             AktRychlostSpawnu = 100;
-            ZbyvajiciItemy = new int[10];
+            ZbyvajiciItemy = new int[8];
+            BOOOOM = -1;
+            BOOOOMTimer = 5 * 1000 / Konstanty.Rychlosthry; //chci aby to bylo 5 sekund
 
             //FORTESTING
-            Spawny = new Spawn[2];
-            Spawny[0] = new Spawn(50, new Point(100, 100));
-            Spawny[1] = new Spawn(25, new Point(50, 100));
+            for (int i = 0; i < ZbyvajiciItemy.Length; i++)
+            {
+                ZbyvajiciItemy[i] = 50;
+            }
+
+            Spawny = new Spawn[1];
+            Spawny[0] = new Spawn(30, new Point(500, 300));
+            //Spawny[1] = new Spawn(25, new Point(50, 100));
         }
 
 
