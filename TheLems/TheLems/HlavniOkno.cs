@@ -67,7 +67,7 @@ namespace TheLems
         {
             Cas = DateTime.Now; //FORTESTING
 
-            DrawLemmings PoziceATypy = Hra.Tick();
+            DrawInfoTransfer PoziceATypy = Hra.Tick();
             GameDraw(PoziceATypy);
         }
 
@@ -256,7 +256,7 @@ namespace TheLems
                     GrafikaButtons = Graphics.FromImage(TlacitkaUp);
 
                     Bitmap TempBMP;
-                    TempBMP = new Bitmap(@"Animations\TriZidiTest.png");
+                    TempBMP = new Bitmap(@"Animations\ZidiTest.png");
                     ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
                     for (int i = 0; i < ObrazkyLemmu.Length; i++)
                     {
@@ -319,8 +319,6 @@ namespace TheLems
                                     new Font("Verdana", 10), Brushes.White,
                                     PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY - 20);
                         }
-
-
                     }
                 }
 
@@ -373,7 +371,7 @@ namespace TheLems
         {
             Lemmings = new DrawLemmings();
             Delete = new DrawSpace();
-            DrawStairs = new DrawStairs();
+            Stairs = new DrawStairs();
 
         }
     }
@@ -472,7 +470,7 @@ namespace TheLems
             protected int _TicksToDetonation;
             public int TicksToDetonation { get { return _TicksToDetonation; } protected set { _TicksToDetonation = value; } }
 
-            public int Tick(Bitmap Popredi)
+            public int Tick(Bitmap Popredi, Blocker[] Blockerz)
             {
                 if(detonate)
                 {
@@ -482,11 +480,11 @@ namespace TheLems
                     }
                 }
 
-                return Move(Popredi);
+                return Move(Popredi, Blockerz);
 
             }
             //hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec, 4 - otocil se
-            protected virtual int Move(Bitmap Popredi)
+            protected virtual int Move(Bitmap Popredi, Blocker[] Blockerz)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
@@ -502,7 +500,7 @@ namespace TheLems
                     {
                         Falling = 0;
                     }
-                    return Sideways(Popredi);
+                    return Sideways(Popredi, Blockerz);
                 }
             }
 
@@ -513,11 +511,25 @@ namespace TheLems
                 return 0;
             }
 
-            protected virtual int Sideways(Bitmap Popredi)
+            protected virtual int Sideways(Bitmap Popredi, Blocker[] Blockerz)
             {
                 if (Smer != 0)
                 {
                     int Posun = 0;
+                    Posun = (Konstanty.velikostLemaX / 2) * (-Smer);
+
+                    int Cyklus = 0;
+                    while (Blockerz[Cyklus] != null)
+                    { 
+                        if ((Blockerz[Cyklus].Pozice.X + Posun == Pozice.X + Smer) && (Math.Abs(Blockerz[Cyklus].Pozice.Y - Pozice.Y) < 31))
+                        { 
+                            Smer *= -1;
+                            return 5;
+                        }
+                        Cyklus++;
+                    }
+
+                    Posun = 0;
                     for (int i = Konstanty.velikostLemaY; i >= -Konstanty.velikostLemaY / 2; i--) 
                     {
                         if (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A != 0)
@@ -583,14 +595,14 @@ namespace TheLems
                 TicksToDetonation = -1;
             }
 
-            public Walker(Lemming Lemming)
+            public Walker(Lemming Zdroj)
             {
                 Typ = 0;
-                Pozice = Lemming.Pozice;
-                Falling = Lemming.Falling;
-                Smer = Lemming.Smer;
-                detonate = Lemming.detonate;
-                TicksToDetonation = Lemming.TicksToDetonation;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
             }
         }
 
@@ -620,11 +632,11 @@ namespace TheLems
 
             }
 
-            protected override int Move(Bitmap Popredi)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
             {
                 if (Typ == 0)
                 {
-                    int Navrat = base.Move(Popredi);
+                    int Navrat = base.Move(Popredi, Blockerz);
                     if (Navrat == 4)
                     {
                         Typ = 1;
@@ -649,14 +661,14 @@ namespace TheLems
                 TicksToDetonation = -1;
             }
 
-            public Climber(Lemming Lemming)
+            public Climber(Lemming Zdroj)
             {
                 Typ = 0;
-                Pozice = Lemming.Pozice;
-                Falling = Lemming.Falling;
-                Smer = Lemming.Smer;
-                detonate = Lemming.detonate;
-                TicksToDetonation = Lemming.TicksToDetonation;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
             }
         }
 
@@ -677,7 +689,7 @@ namespace TheLems
             }
             
 
-            protected override int Move(Bitmap Popredi)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
@@ -690,7 +702,7 @@ namespace TheLems
                     {
                         return 3;
                     }
-                    return Sideways(Popredi);
+                    return Sideways(Popredi, Blockerz);
                 }
             }
 
@@ -704,36 +716,46 @@ namespace TheLems
                 TicksToDetonation = -1;
             }
 
-            public Floater(Lemming Lemming)
+            public Floater(Lemming Zdroj)
             {
                 Typ = 0;
-                Pozice = Lemming.Pozice;
+                Pozice = Zdroj.Pozice;
                 Falling = 0; //Tomuhle je to vlastne jedno
-                Smer = Lemming.Smer;
-                detonate = Lemming.detonate;
-                TicksToDetonation = Lemming.TicksToDetonation;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
             }
         }
 
         class Blocker : Lemming
         {
-            int KteryRectangle;//Ktery Rectangle je jeho v Blockerz
+            public int MujIndex;
 
-            protected override int Sideways(Bitmap Popredi)
+            public void OdstranSe(Blocker[] Blockerz, int AktPocetBlockeru)
             {
-                return 1;
+                Blockerz[MujIndex] = Blockerz[AktPocetBlockeru];
+                Blockerz[AktPocetBlockeru--] = null;
+                if (AktPocetBlockeru > 0)
+                    Blockerz[MujIndex].MujIndex = MujIndex;
+       
             }
 
-            protected override int Fall(Bitmap Popredi)
+            public Blocker(Lemming Zdroj, Blocker[] Blockerz, int AktPocetBlockeru)
             {
-                Pozice.Y++;
-                Falling++;
-                Blockerz[KteryRectangle].Offset(0,1)
+                Typ = 3;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling; //Tomuhle je to vlastne jedno
+                Smer = 0;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
+
+                Blockerz[AktPocetBlockeru] = this;
+                MujIndex = AktPocetBlockeru;
             }
         }
         
         Lemming[] Lemmingove;
-        Rectangle[] Blockerz;
+        Blocker[] Blockerz; //Sudy jsou levy, lichy jsou pravy strany, aby se dalo jednosmerne prochazet
         Spawn[] Spawny;
         Bitmap Popredi;
         int[] ZbyvajiciItemy;
@@ -742,18 +764,19 @@ namespace TheLems
         int PocetSpawnutych;
         int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
         int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
+        int AktPocetBlockeru;
 
-        public DrawLemmings Tick()
+        public DrawInfoTransfer Tick()
         {
-            DrawLemmings navrat = new DrawLemmings();
-            DrawLemmings Aktualni = navrat;
+            DrawInfoTransfer navrat = new DrawInfoTransfer();
+            DrawLemmings Aktualni = navrat.Lemmings;
 
             
             //Move
             int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
             while (Cyklus < AktualniPocetZivichLemmingu)
             { 
-                switch (Lemmingove[Cyklus].Tick(Popredi))
+                switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
                 {
                     case 0: //Zije
                         Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
@@ -766,6 +789,9 @@ namespace TheLems
                         Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
                             Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
+                        if (Lemmingove[Cyklus] is Blocker)
+                            (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
+
                         Lemmingove[Cyklus] = Lemmingove[--AktualniPocetZivichLemmingu];//DEATH
                         Lemmingove[AktualniPocetZivichLemmingu] = null;
                         continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
@@ -774,9 +800,12 @@ namespace TheLems
                         Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
                             Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
+                        if (Lemmingove[Cyklus] is Blocker)
+                            (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
+
                         Lemmingove[Cyklus] = Lemmingove[--AktualniPocetZivichLemmingu];//DEATH
                         Lemmingove[AktualniPocetZivichLemmingu] = null;
-                        break;
+                        continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
                     case 3:  //Zmena zpet na Walkera
                             
@@ -789,6 +818,12 @@ namespace TheLems
 
                     case 4: //Otocil se, signal pro climbera, tady nic nemeni oproti walkerovi
                         Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
+                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
+                        Aktualni = Aktualni.Dalsi;
+                        break;
+
+                    case 5: //Odraz od blockera
+                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
                         Aktualni = Aktualni.Dalsi;
                         break;
@@ -920,6 +955,13 @@ namespace TheLems
                                 ZbyvajiciItemy[Selected]--;
                             }
                             break;
+                        case 3://Blocker
+                            if (!(Lemmingove[KliknutyLemming] is Blocker))
+                            {
+                                Lemmingove[KliknutyLemming] = new Blocker(Lemmingove[KliknutyLemming], Blockerz, AktPocetBlockeru++);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
                     }
                 }
         }
@@ -973,13 +1015,18 @@ namespace TheLems
             ZbyvajiciItemy = new int[8];
             BOOOOM = -1;
             BOOOOMTimer = 5 * 1000 / Konstanty.Rychlosthry; //chci aby to bylo 5 sekund
-
+            AktPocetBlockeru = 0;
+            
             //FORTESTING
             for (int i = 0; i < ZbyvajiciItemy.Length; i++)
             {
                 ZbyvajiciItemy[i] = 50;
             }
 
+            Blockerz = new Blocker[Math.Min(Lemmingove.Length, ZbyvajiciItemy[3])];
+
+
+            //FORTESTING
             Spawny = new Spawn[1];
             Spawny[0] = new Spawn(30, new Point(500, 300));
             //Spawny[1] = new Spawn(25, new Point(50, 100));
