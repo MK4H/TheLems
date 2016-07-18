@@ -22,7 +22,7 @@ namespace TheLems
         Bitmap ToPictureBoxGame, Popredi, Pozadi, TlacitkaUp;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
-        Graphics GrafikaGame, GrafikaButtons;
+        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         DateTime Cas; //FORTESTING
@@ -35,7 +35,7 @@ namespace TheLems
 
 
             ToPictureBoxGame = new Bitmap(1280, 648);
-            GrafikaGame = Graphics.FromImage(ToPictureBoxGame);
+            GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
             PictureBoxGame.Image = ToPictureBoxGame;
             PictureBoxGame.Height = ToPictureBoxGame.Height;
             PictureBoxGame.Width = ToPictureBoxGame.Width;
@@ -249,6 +249,8 @@ namespace TheLems
 
 
                     Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
+                    GrafikaGameLandscape = Graphics.FromImage(Popredi);
+
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
                     TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
 
@@ -287,34 +289,53 @@ namespace TheLems
 
             CheckMousePosition(); // nacteni lemmingu v kurzoru
 
-            GrafikaGame.Clear(Color.Black);
-            GrafikaGame.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
-            GrafikaGame.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
-            GrafikaGame.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysiObrazovka.X - 5, PoziceMysiObrazovka.Y - 5, 10, 10)); //FORTESTING
+            //DrawStairs - protoze se to kresli do Popredi, a z toho pak potrebuju vyriznout cast
+            while (DrawInfo.Stairs != null)
+            {
+
+                if (DrawInfo.Stairs.Pozice != Point.Empty)
+                {
+                    if (DrawInfo.Stairs.Smer == 1)
+                        DrawInfo.Stairs.Pozice.Offset(1, -1);
+                    else
+                        DrawInfo.Stairs.Pozice.Offset(-10, -1);
+
+                    GrafikaGameLandscape.FillRectangle(new SolidBrush(Color.FromArgb(254, Color.Blue)),
+                        new Rectangle(DrawInfo.Stairs.Pozice, new Size(9, 2)));
+                }
+                DrawInfo.Stairs = DrawInfo.Stairs.Dalsi;
+            }
+
+            GrafikaGameDisplay.Clear(Color.Black); //Vymazani obrazovky
+            GrafikaGameDisplay.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGameDisplay.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGameDisplay.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysiObrazovka.X - 5, PoziceMysiObrazovka.Y - 5, 10, 10)); //FORTESTING
 
 
+            
+            
             //Draw Lemmings
             int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
 
             while (DrawInfo.Lemmings != null) //Projet spojak
             {
                 //Pozice leveho horniho rohu lemma
-                PoziceLemmaObrazovkaX = DrawInfo.Lemmings.Souradnice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
+                PoziceLemmaObrazovkaX = DrawInfo.Lemmings.Pozice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
                 //Vyradit lemy mimo zobrazenou plochu
                 if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width))
                 {
                     //Pozice leveho horniho rohu lemma
-                    PoziceLemmaObrazovkaY = DrawInfo.Lemmings.Souradnice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
+                    PoziceLemmaObrazovkaY = DrawInfo.Lemmings.Pozice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
                     if ((PoziceLemmaObrazovkaY > 0) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
                     {
                         if (DrawInfo.Lemmings.Typ >= 0)
                         {
                             //Nakreslit Lemma
-                            GrafikaGame.DrawImage(ObrazkyLemmu[DrawInfo.Lemmings.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
+                            GrafikaGameDisplay.DrawImage(ObrazkyLemmu[DrawInfo.Lemmings.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
 
                             //Pripadne nakreslit cas do detonace
                             if (DrawInfo.Lemmings.TicksToDetonation > 0)
-                                GrafikaGame.DrawString(
+                                GrafikaGameDisplay.DrawString(
                                     Math.Ceiling(Convert.ToDouble(DrawInfo.Lemmings.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
                                     new Font("Verdana", 10), Brushes.White,
                                     PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY - 20);
@@ -325,8 +346,8 @@ namespace TheLems
 
                 DrawInfo.Lemmings = DrawInfo.Lemmings.Dalsi;
             }
-            GrafikaGame.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
-            GrafikaGame.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
+            GrafikaGameDisplay.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
+            GrafikaGameDisplay.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
             PictureBoxGame.Refresh();
             UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
         }
@@ -378,16 +399,16 @@ namespace TheLems
 
     class DrawLemmings //Pro predavani informaci, kam nakreslit lemingy
     {
-        public Point Souradnice;
+        public Point Pozice;
         public int Typ;
         public int Smer;
         public bool Death;
         public int TicksToDetonation;
         public DrawLemmings Dalsi;
 
-        public DrawLemmings(Point Souradnice, int Typ, int Smer, bool Death, int TicksToDetonation)
+        public DrawLemmings(Point Pozice, int Typ, int Smer, bool Death, int TicksToDetonation)
         {
-            this.Souradnice = Souradnice;
+            this.Pozice = Pozice;
             this.Typ = Typ;
             this.Smer = Smer;
             this.Death = Death;
@@ -404,12 +425,28 @@ namespace TheLems
 
     class DrawSpace
     {
-       
+        public int Typ;
+        public Point Pozice;
     }
 
     class DrawStairs
     {
+        public Point Pozice;
+        public int Smer;
+        public DrawStairs Dalsi;
 
+        public DrawStairs(Point Pozice, int Smer)
+        {
+            this.Pozice = Pozice;
+            this.Smer = Smer;
+            Dalsi = null;
+        }
+        
+        public DrawStairs()
+        {
+            Pozice = Point.Empty;
+            Dalsi = null;
+        }
     }
 
 
@@ -505,9 +542,17 @@ namespace TheLems
             }
 
             protected virtual int Fall(Bitmap Popredi)
-            { 
-                Pozice.Y++;
-                Falling++;
+            {
+                if (Popredi.GetPixel(Pozice.X,Pozice.Y).A == 0)//TODO mozna pridat for cyklus, at padaj vic a rychlejc
+                {
+                    Pozice.Y += 2;
+                    Falling += 2;
+                }
+                else
+                {
+                    Pozice.Y++;
+                    Falling++;
+                }
                 return 0;
             }
 
@@ -534,8 +579,13 @@ namespace TheLems
                     {
                         if (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A != 0)
                         {
-                            Posun = i + 1;
-                            break;
+                            if ((i > 2) && (Popredi.GetPixel(Pozice.X + Smer, Pozice.Y - i).A == 254))
+                                continue;
+                            else
+                            {
+                                Posun = i + 1;
+                                break;
+                            }
                         }
                     }
 
@@ -733,18 +783,16 @@ namespace TheLems
 
             public void OdstranSe(Blocker[] Blockerz, int AktPocetBlockeru)
             {
-                Blockerz[MujIndex] = Blockerz[AktPocetBlockeru];
-                Blockerz[AktPocetBlockeru--] = null;
-                if (AktPocetBlockeru > 0)
-                    Blockerz[MujIndex].MujIndex = MujIndex;
-       
+                Blockerz[MujIndex] = Blockerz[--AktPocetBlockeru];
+                Blockerz[MujIndex].MujIndex = MujIndex;
+                Blockerz[AktPocetBlockeru] = null;
             }
 
             public Blocker(Lemming Zdroj, Blocker[] Blockerz, int AktPocetBlockeru)
             {
                 Typ = 3;
                 Pozice = Zdroj.Pozice;
-                Falling = Zdroj.Falling; //Tomuhle je to vlastne jedno
+                Falling = Zdroj.Falling; 
                 Smer = 0;
                 detonate = Zdroj.detonate;
                 TicksToDetonation = Zdroj.TicksToDetonation;
@@ -753,9 +801,73 @@ namespace TheLems
                 MujIndex = AktPocetBlockeru;
             }
         }
+
+        class Builder : Lemming
+        {
+            int Zasoba;
+            int Waiting;
+
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                if (Waiting > 0)
+                {
+                    Waiting--;
+                    return 0;
+                }
+                else
+                {
+                    if (Waiting == 0)
+                    {
+                        Waiting--;
+                        Zasoba--;
+                        return 6;
+                    }
+                    else
+                    {
+                        int Navrat = base.Sideways(Popredi, Blockerz);
+                        switch (Navrat)
+                        {
+                            case 4://Odrazil se od steny, zmena zpet na walkera
+                                return 3;
+                            case 5://Odrazil se od blockera, pokracovat opacnym smerem
+                                Waiting = 10;
+                                return 0;
+                            case 0://Tri kroky a pak zas pockat, postavit atd.
+                                if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A != 254)
+                                    return 3;
+                                if (Waiting > -3)
+                                    Waiting--;
+                                else
+                                {
+                                    Waiting = 10;
+                                    if (Zasoba == 0)
+                                        return 3;
+                                } 
+                                return 0;
+                            default:
+                                throw new Exception();
+                        }
+                    }
+                }
+            }
+
+            public Builder(Lemming Zdroj)
+            {
+                Typ = 4;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
+
+                Waiting = 10;
+                Zasoba = 50; //BALANC HRY
+            }
+        }
+            
         
         Lemming[] Lemmingove;
-        Blocker[] Blockerz; //Sudy jsou levy, lichy jsou pravy strany, aby se dalo jednosmerne prochazet
+        Blocker[] Blockerz; 
         Spawn[] Spawny;
         Bitmap Popredi;
         int[] ZbyvajiciItemy;
@@ -769,8 +881,9 @@ namespace TheLems
         public DrawInfoTransfer Tick()
         {
             DrawInfoTransfer navrat = new DrawInfoTransfer();
-            DrawLemmings Aktualni = navrat.Lemmings;
-
+            DrawLemmings AktualniLemming = navrat.Lemmings;
+            DrawStairs AktualniSchod = navrat.Stairs;
+            DrawSpace AktualniSpace = navrat.Delete;
             
             //Move
             int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
@@ -779,16 +892,16 @@ namespace TheLems
                 switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
                 {
                     case 0: //Zije
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
                         break;
 
 
                     case 1: //Spadnul
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
                             Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
                         if (Lemmingove[Cyklus] is Blocker)
                             (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
 
@@ -797,9 +910,9 @@ namespace TheLems
                         continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
                     case 2: //Detonate
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
                             Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
                         if (Lemmingove[Cyklus] is Blocker)
                             (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
 
@@ -811,21 +924,28 @@ namespace TheLems
                             
                         Lemmingove[Cyklus].Typ = 0;
                         Lemmingove[Cyklus] = new Walker(Lemmingove[Cyklus]);
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
                         break;
 
                     case 4: //Otocil se, signal pro climbera, tady nic nemeni oproti walkerovi
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
                         break;
 
                     case 5: //Odraz od blockera
-                        Aktualni.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        Aktualni = Aktualni.Dalsi;
+                        AktualniLemming = AktualniLemming.Dalsi;
+                        break;
+                    case 6://Build stair
+                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
+                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
+                        AktualniLemming = AktualniLemming.Dalsi;
+                        AktualniSchod.Dalsi = new DrawStairs(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
+                        AktualniSchod = AktualniSchod.Dalsi;
                         break;
 
                 }
@@ -846,8 +966,8 @@ namespace TheLems
                     Lemmingove[AktualniPocetZivichLemmingu] = TempLemming;
                     PocetSpawnutych++;
                     AktualniPocetZivichLemmingu++;
-                    Aktualni.Dalsi = new DrawLemmings(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                    Aktualni = Aktualni.Dalsi;
+                    AktualniLemming.Dalsi = new DrawLemmings(TempLemming.Pozice, TempLemming.Typ, TempLemming.Smer, false, Lemmingove[Cyklus].TicksToDetonation);
+                    AktualniLemming = AktualniLemming.Dalsi;
                 }
             }
 
@@ -962,6 +1082,13 @@ namespace TheLems
                                 ZbyvajiciItemy[Selected]--;
                             }
                             break;
+                        case 4://Builder
+                            if (!(Lemmingove[KliknutyLemming] is Builder))
+                            {
+                                Lemmingove[KliknutyLemming] = new Builder(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
                     }
                 }
         }
@@ -1027,9 +1154,9 @@ namespace TheLems
 
 
             //FORTESTING
-            Spawny = new Spawn[1];
+            Spawny = new Spawn[2];
             Spawny[0] = new Spawn(30, new Point(500, 300));
-            //Spawny[1] = new Spawn(25, new Point(50, 100));
+            Spawny[1] = new Spawn(25, new Point(200, 200));
         }
 
 
