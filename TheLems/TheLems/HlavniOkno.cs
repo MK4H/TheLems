@@ -324,8 +324,21 @@ namespace TheLems
                             15, Konstanty.velikostLemaY + 2));
                         break;
                     case 2://Diagonal
+                        if (DrawInfo.Spaces.Smer == 1)
+                            DrawInfo.Spaces.Pozice.X += 6 - (Konstanty.velikostLemaX / 2); 
+                            //aby levej konec byl ve ctrtine leminga
+                        else
+                            DrawInfo.Spaces.Pozice.X += (- 17 - (Konstanty.velikostLemaX / 2)); 
+                        //aby 35 - 17 byla ctvrtina velikosti leminga v X, tedy 18 - potom pravej konec je ve ctvrtine leminga
+                        GrafikaGameLandscape.FillEllipse(Brushes.Transparent, 
+                        new Rectangle(DrawInfo.Spaces.Pozice.X, DrawInfo.Spaces.Pozice.Y - Konstanty.velikostLemaY + 3,
+                        35, 35));
                         break;
                     case 3://Down
+                        GrafikaGameLandscape.FillRectangle(Brushes.Transparent,
+                            DrawInfo.Spaces.Pozice.X - Konstanty.velikostLemaX / 2,
+                            DrawInfo.Spaces.Pozice.Y + 1,
+                            Konstanty.velikostLemaX, 2);
                         break;
                 }
                 DrawInfo.Spaces = DrawInfo.Spaces.Dalsi;
@@ -587,7 +600,7 @@ namespace TheLems
 
             protected virtual int Fall(Bitmap Popredi)
             {
-                if (Popredi.GetPixel(Pozice.X,Pozice.Y).A == 0)//TODO mozna pridat for cyklus, at padaj vic a rychlejc
+                if (Popredi.GetPixel(Pozice.X,Pozice.Y + 2).A == 0)//TODO mozna pridat for cyklus, at padaj vic a rychlejc
                 {
                     Pozice.Y += 2;
                     Falling += 2;
@@ -597,7 +610,7 @@ namespace TheLems
                     Pozice.Y++;
                     Falling++;
                 }
-                return 0;
+                return 10;
             }
 
             protected virtual int Sideways(Bitmap Popredi, Blocker[] Blockerz)
@@ -779,7 +792,7 @@ namespace TheLems
                 {
                     Falling++;
                 }
-                return 0;
+                return 10;
             }
             
 
@@ -905,7 +918,7 @@ namespace TheLems
                 TicksToDetonation = Zdroj.TicksToDetonation;
 
                 Waiting = 10;
-                Zasoba = 50; //BALANC HRY
+                Zasoba = 12; //BALANC HRY
             }
         }
             
@@ -915,65 +928,11 @@ namespace TheLems
 
             protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
             {
-                if (Typ == 0)
-                {
-                    if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
-                    {
-                        return Fall(Popredi);
-                    }
-                    else
-                    {
-                        if (Falling > Konstanty.velikostLemaY * 4) //BALANCHRY
-                        {
-                            return 1;
-                        }
-                        else
-                        {
-                            Falling = 0;
-                        }
-                        int Navrat = base.Sideways(Popredi, Blockerz);
-
-                        if (Waiting < 20)
-                        {
-                            if (Navrat == 4)
-                            {
-                                Smer *= -1;
-                                Typ = 5;
-                                Waiting = 20;
-                                return 0;
-                            }
-                            else
-                            {
-                                Waiting++;
-                                return 0;
-                            }
-                        }
-                        else
-                        {
-                            if (Navrat != 4)
-                            {
-                                return 3;
-                            }
-                            else
-                            {
-                                Waiting = 20;
-                                return 0;
-                            }
-                        }
-                             
-                    }
-                }
+                int Navrat = base.Move(Popredi, Blockerz);
+                if (Navrat == 10)
+                    return 3;
                 else
-                {
-                    if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
-                    {
-                        return 3;
-                    }
-                    else
-                    {
-                        return Sideways(Popredi, Blockerz);
-                    }
-                }
+                    return Navrat;
             }
 
             protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
@@ -988,7 +947,7 @@ namespace TheLems
                     Waiting--;
                     return 7;
                 }
-                else if (Waiting > -16) // posun o vzdalenost kopu dopredu
+                else if (Waiting > -16) //Posun pro dalsi kop, pokud neco je v ceste, pak indestructible a odraz
                 {
                     if (base.Sideways(Popredi, Blockerz) != 0)
                         return 3;
@@ -998,9 +957,37 @@ namespace TheLems
                         return 0;
                     }
                 }
+                else if (Waiting == -16) //Konec posunu, pred nim by mela byt stena, pokud neni, tak se uz prokopal skrz a konec
+                {
+                    if (base.Sideways(Popredi, Blockerz) == 0)
+                        return 3;
+                    else
+                    {
+                        Smer *= -1;
+                        Waiting = 20;
+                        return 0;
+                    }
+                }
+                else if (Waiting > -31) //Tolerance x + 16 pixelu
+                    // pro inicializaci pri kliku, potom uz by se sem nikdy nemelo dostat
+                    // je potreba dojit k stene, dat urcitou toleranci pri kliknuti, ze nemusi bejt uplne u steny
+                {
+                    if (base.Sideways(Popredi, Blockerz) != 0)
+                    {
+                        Smer *= -1;
+                        Waiting = 20;
+                        return 0;
+                    }
+                    else
+                    {
+                        Waiting--;
+                        return 0;
+                    }
+                }
                 else
                 {
-                    if (base.Sideways(Popredi, Blockerz) == 0) //pokud je pred nim volno tak uz nekope
+                    //konec tolerance, pokud ani tady neni stena, pak nema co kopat a zmena zpet
+                    if (base.Sideways(Popredi, Blockerz) == 0)
                         return 3;
                     else
                     {
@@ -1014,14 +1001,127 @@ namespace TheLems
 
             public Basher(Lemming Zdroj)
             {
-                Typ = 0;
+                Typ = 5;
                 Pozice = Zdroj.Pozice;
                 Falling = Zdroj.Falling;
                 Smer = Zdroj.Smer;
                 detonate = Zdroj.detonate;
                 TicksToDetonation = Zdroj.TicksToDetonation;
 
-                Waiting = 0;
+                Waiting = -20;
+            }
+        }
+
+        class Miner : Lemming
+        {
+            int Waiting;
+
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                int Navrat = base.Move(Popredi, Blockerz);
+                if (Navrat == 10 && Waiting != -1)
+                    return 3;
+                else if (Navrat == 10 && Waiting == -1) //Po kazdym kopnuti, tedy pri waiting == -1, kousek pada
+                {
+                    if (Falling > 5)
+                        return 3;
+                    else
+                        return 0;
+                }
+                else
+                    return Navrat;
+            }
+
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                if (Waiting > 0) //delay pro animaci kopani
+                {
+                    Waiting--;
+                    return 0;
+                }
+                else if (Waiting == 0) //mine
+                {
+                    Waiting--;
+                    return 8;
+                }
+                else if (Waiting > -13) //Posun
+                {
+                    if (base.Sideways(Popredi, Blockerz) != 0)
+                        return 3;
+                    else
+                    {
+                        Waiting--;
+                        return 0;
+                    }
+                }
+                else //Konec posunu, animace
+                {
+                    Waiting = 20;
+                    return 0;   
+                }
+                
+
+            }
+        
+
+            public Miner(Lemming Zdroj)
+            {
+                Typ = 6;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
+
+                Waiting = 20;
+            }
+        }
+
+        class Digger : Lemming
+        {
+            int Waiting;
+
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                int Navrat = base.Move(Popredi, Blockerz);
+
+                if (Navrat == 10 && Falling == 2)
+                {
+                    Waiting = 10;
+                    return 0;
+                }
+                else if (Navrat == 10 && Falling != 2)
+                    return 3;
+                else
+                    return Navrat;
+            }
+
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                if (Waiting > 0)
+                {
+                    Waiting--;
+                    return 0;
+                }
+                else if (Waiting == 0)
+                {
+                    Waiting--;
+                    return 9;
+                }
+                else
+                    return 3;
+            }
+
+            public Digger(Lemming Zdroj)
+            {
+                Typ = 7;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
+
+                Waiting = 10;
             }
         }
 
@@ -1053,7 +1153,7 @@ namespace TheLems
 
                 switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
                 // 0 - zije, 1 - spadnul, 2 - detonate, 3 - zmena na walkera, 4 - odraz od steny, 5 - odraz od blockera
-                // 6 - build stair, 7 - kop horizontalne, 8 - kop diagonalne, 9 - kop dolu
+                // 6 - build stair, 7 - kop horizontalne, 8 - kop diagonalne, 9 - kop dolu, 10 - pada
                 {
                    
                     case 1: //Spadnul
@@ -1091,7 +1191,14 @@ namespace TheLems
                         AktualniSpace.Dalsi = new DrawSpace(1, Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
                         AktualniSpace = AktualniSpace.Dalsi;
                         break;
-
+                    case 8://Kop diagonalne
+                        AktualniSpace.Dalsi = new DrawSpace(2, Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
+                        AktualniSpace = AktualniSpace.Dalsi;
+                        break;
+                    case 9://Kop dolu
+                        AktualniSpace.Dalsi = new DrawSpace(3, Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
+                        AktualniSpace = AktualniSpace.Dalsi;
+                        break;
                 }
                 AktualniLemming = AktualniLemming.Dalsi;
                 Cyklus++;
@@ -1234,10 +1341,24 @@ namespace TheLems
                                 ZbyvajiciItemy[Selected]--;
                             }
                             break;
-                        case 5:
+                        case 5://Basher
                             if (!(Lemmingove[KliknutyLemming] is Basher))
                             {
                                 Lemmingove[KliknutyLemming] = new Basher(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
+                        case 6://Miner
+                            if (!(Lemmingove[KliknutyLemming] is Miner))
+                            {
+                                Lemmingove[KliknutyLemming] = new Miner(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
+                        case 7://Digger
+                            if (!(Lemmingove[KliknutyLemming] is Digger))
+                            {
+                                Lemmingove[KliknutyLemming] = new Digger(Lemmingove[KliknutyLemming]);
                                 ZbyvajiciItemy[Selected]--;
                             }
                             break;
