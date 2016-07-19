@@ -67,8 +67,9 @@ namespace TheLems
         {
             Cas = DateTime.Now; //FORTESTING
 
-            DrawInfoTransfer PoziceATypy = Hra.Tick();
-            GameDraw(PoziceATypy);
+            DrawInfoTransfer DrawInfo = Hra.Tick();
+            ImpactDraw(DrawInfo);
+            GameDraw(DrawInfo);
         }
 
         private void PictureBoxGame_MouseMove(object sender, MouseEventArgs e)
@@ -250,6 +251,7 @@ namespace TheLems
 
                     Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
                     GrafikaGameLandscape = Graphics.FromImage(Popredi);
+                    GrafikaGameLandscape.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
 
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
                     TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
@@ -281,15 +283,9 @@ namespace TheLems
             }
         }
 
-
-
-        private void GameDraw(DrawInfoTransfer DrawInfo)
+        private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
         {
-
-
-            CheckMousePosition(); // nacteni lemmingu v kurzoru
-
-            //DrawStairs - protoze se to kresli do Popredi, a z toho pak potrebuju vyriznout cast
+            //Vykresli nove schody do popredi
             while (DrawInfo.Stairs != null)
             {
 
@@ -306,14 +302,39 @@ namespace TheLems
                 DrawInfo.Stairs = DrawInfo.Stairs.Dalsi;
             }
 
+            while (DrawInfo.Spaces != null)
+            {
+                switch (DrawInfo.Spaces.Typ)
+                {
+                    case 0://Detonate
+                        GrafikaGameLandscape.FillEllipse(Brushes.Transparent, 
+                            new Rectangle(DrawInfo.Spaces.Pozice.X - Konstanty.velikostLemaX,
+                            DrawInfo.Spaces.Pozice.Y - (Konstanty.velikostLemaY / 2)*3,
+                            Konstanty.velikostLemaX * 2, Konstanty.velikostLemaY * 2));
+                        break;
+                    case 1://Sideways
+                        
+                        break;
+                    case 2://Diagonal
+                        break;
+                    case 3://Down
+                        break;
+                }
+                DrawInfo.Spaces = DrawInfo.Spaces.Dalsi;
+            }
+        }
+
+        private void GameDraw(DrawInfoTransfer DrawInfo)
+        {
+
+
+            CheckMousePosition(); // nacteni lemmingu v kurzoru
+
             GrafikaGameDisplay.Clear(Color.Black); //Vymazani obrazovky
             GrafikaGameDisplay.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
             GrafikaGameDisplay.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
             GrafikaGameDisplay.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysiObrazovka.X - 5, PoziceMysiObrazovka.Y - 5, 10, 10)); //FORTESTING
-
-
-            
-            
+          
             //Draw Lemmings
             int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
 
@@ -352,7 +373,6 @@ namespace TheLems
             UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
         }
 
-
         private void ButtonDraw()
         {
             string AktString;
@@ -385,13 +405,13 @@ namespace TheLems
     class DrawInfoTransfer
     {
         public DrawLemmings Lemmings;
-        public DrawSpace Delete;
+        public DrawSpace Spaces;
         public DrawStairs Stairs;
 
         public DrawInfoTransfer()
         {
             Lemmings = new DrawLemmings();
-            Delete = new DrawSpace();
+            Spaces = new DrawSpace();
             Stairs = new DrawStairs();
 
         }
@@ -416,9 +436,9 @@ namespace TheLems
             Dalsi = null;
         }
 
-        public DrawLemmings()
+        public DrawLemmings() //Hlava Spojaku
         {
-            Typ = -1; //Oznaceni hlavy spojaku
+            Typ = -1; 
             Dalsi = null;
         }
     }
@@ -427,6 +447,22 @@ namespace TheLems
     {
         public int Typ;
         public Point Pozice;
+        public int Smer;
+        public DrawSpace Dalsi;
+
+        public DrawSpace(int Typ, Point Pozice, int Smer)
+        {
+            this.Typ = Typ;
+            this.Pozice = Pozice;
+            this.Smer = Smer;
+            Dalsi = null;
+        }
+
+        public DrawSpace() //Hlava spojaku
+        {
+            Typ = -1;
+            Dalsi = null;
+        }
     }
 
     class DrawStairs
@@ -442,7 +478,7 @@ namespace TheLems
             Dalsi = null;
         }
         
-        public DrawStairs()
+        public DrawStairs() //Hlava spojaku
         {
             Pozice = Point.Empty;
             Dalsi = null;
@@ -883,7 +919,7 @@ namespace TheLems
             DrawInfoTransfer navrat = new DrawInfoTransfer();
             DrawLemmings AktualniLemming = navrat.Lemmings;
             DrawStairs AktualniSchod = navrat.Stairs;
-            DrawSpace AktualniSpace = navrat.Delete;
+            DrawSpace AktualniSpace = navrat.Spaces;
             
             //Move
             int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
@@ -913,6 +949,10 @@ namespace TheLems
                         AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
                             Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
                         AktualniLemming = AktualniLemming.Dalsi;
+
+                        AktualniSpace.Dalsi = new DrawSpace(0, Lemmingove[Cyklus].Pozice, 0);
+                        AktualniSpace = AktualniSpace.Dalsi;
+
                         if (Lemmingove[Cyklus] is Blocker)
                             (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
 
