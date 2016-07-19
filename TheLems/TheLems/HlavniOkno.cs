@@ -313,7 +313,15 @@ namespace TheLems
                             Konstanty.velikostLemaX * 2, Konstanty.velikostLemaY * 2));
                         break;
                     case 1://Sideways
-                        
+                        if (DrawInfo.Spaces.Smer == 1) //Nastaveni spravne pozice X
+                            DrawInfo.Spaces.Pozice.X += 1;
+                        else
+                            DrawInfo.Spaces.Pozice.X -= 15;
+
+                        GrafikaGameLandscape.FillRectangle(Brushes.Transparent,
+                            new Rectangle(DrawInfo.Spaces.Pozice.X,
+                            DrawInfo.Spaces.Pozice.Y - Konstanty.velikostLemaY - 1,
+                            15, Konstanty.velikostLemaY + 2));
                         break;
                     case 2://Diagonal
                         break;
@@ -901,7 +909,122 @@ namespace TheLems
             }
         }
             
-        
+        class Basher : Lemming
+        {
+            int Waiting;
+
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                if (Typ == 0)
+                {
+                    if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
+                    {
+                        return Fall(Popredi);
+                    }
+                    else
+                    {
+                        if (Falling > Konstanty.velikostLemaY * 4) //BALANCHRY
+                        {
+                            return 1;
+                        }
+                        else
+                        {
+                            Falling = 0;
+                        }
+                        int Navrat = base.Sideways(Popredi, Blockerz);
+
+                        if (Waiting < 20)
+                        {
+                            if (Navrat == 4)
+                            {
+                                Smer *= -1;
+                                Typ = 5;
+                                Waiting = 20;
+                                return 0;
+                            }
+                            else
+                            {
+                                Waiting++;
+                                return 0;
+                            }
+                        }
+                        else
+                        {
+                            if (Navrat != 4)
+                            {
+                                return 3;
+                            }
+                            else
+                            {
+                                Waiting = 20;
+                                return 0;
+                            }
+                        }
+                             
+                    }
+                }
+                else
+                {
+                    if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
+                    {
+                        return 3;
+                    }
+                    else
+                    {
+                        return Sideways(Popredi, Blockerz);
+                    }
+                }
+            }
+
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            {
+                if (Waiting > 0) //delay pro animaci kopani
+                {
+                    Waiting--;
+                    return 0;
+                }
+                else if (Waiting == 0) //kop
+                {
+                    Waiting--;
+                    return 7;
+                }
+                else if (Waiting > -16) // posun o vzdalenost kopu dopredu
+                {
+                    if (base.Sideways(Popredi, Blockerz) != 0)
+                        return 3;
+                    else
+                    {
+                        Waiting--;
+                        return 0;
+                    }
+                }
+                else
+                {
+                    if (base.Sideways(Popredi, Blockerz) == 0) //pokud je pred nim volno tak uz nekope
+                        return 3;
+                    else
+                    {
+                        Smer *= -1;
+                        Waiting = 20;
+                        return 0;
+                    }
+                }
+                
+            }
+
+            public Basher(Lemming Zdroj)
+            {
+                Typ = 0;
+                Pozice = Zdroj.Pozice;
+                Falling = Zdroj.Falling;
+                Smer = Zdroj.Smer;
+                detonate = Zdroj.detonate;
+                TicksToDetonation = Zdroj.TicksToDetonation;
+
+                Waiting = 0;
+            }
+        }
+
         Lemming[] Lemmingove;
         Blocker[] Blockerz; 
         Spawn[] Spawny;
@@ -924,20 +1047,17 @@ namespace TheLems
             //Move
             int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
             while (Cyklus < AktualniPocetZivichLemmingu)
-            { 
-                switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
-                {
-                    case 0: //Zije
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
+            {
+                AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
-                        break;
 
-
+                switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
+                // 0 - zije, 1 - spadnul, 2 - detonate, 3 - zmena na walkera, 4 - odraz od steny, 5 - odraz od blockera
+                // 6 - build stair, 7 - kop horizontalne, 8 - kop diagonalne, 9 - kop dolu
+                {
+                   
                     case 1: //Spadnul
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
-                            Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
+                        AktualniLemming.Death = true;
                         if (Lemmingove[Cyklus] is Blocker)
                             (Lemmingove[Cyklus] as Blocker).OdstranSe(Blockerz, AktPocetBlockeru--);
 
@@ -946,9 +1066,7 @@ namespace TheLems
                         continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
                     case 2: //Detonate
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Typ,
-                            Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
+                        AktualniLemming.Death = true;
 
                         AktualniSpace.Dalsi = new DrawSpace(0, Lemmingove[Cyklus].Pozice, 0);
                         AktualniSpace = AktualniSpace.Dalsi;
@@ -960,35 +1078,22 @@ namespace TheLems
                         Lemmingove[AktualniPocetZivichLemmingu] = null;
                         continue;//znovu projde to same misto v poli, protoze sem tam presnunul noveho
 
-                    case 3:  //Zmena zpet na Walkera
-                            
-                        Lemmingove[Cyklus].Typ = 0;
+                    case 3:  //Zmena zpet na Walkera  
                         Lemmingove[Cyklus] = new Walker(Lemmingove[Cyklus]);
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
-                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, true, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
+                        AktualniLemming.Typ = 0;
                         break;
 
-                    case 4: //Otocil se, signal pro climbera, tady nic nemeni oproti walkerovi
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice, 
-                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
-                        break;
-
-                    case 5: //Odraz od blockera
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
-                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
-                        break;
                     case 6://Build stair
-                        AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
-                            Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
-                        AktualniLemming = AktualniLemming.Dalsi;
                         AktualniSchod.Dalsi = new DrawStairs(Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
                         AktualniSchod = AktualniSchod.Dalsi;
                         break;
+                    case 7://Kop horizontalne
+                        AktualniSpace.Dalsi = new DrawSpace(1, Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
+                        AktualniSpace = AktualniSpace.Dalsi;
+                        break;
 
                 }
+                AktualniLemming = AktualniLemming.Dalsi;
                 Cyklus++;
             }
 
@@ -1129,6 +1234,13 @@ namespace TheLems
                                 ZbyvajiciItemy[Selected]--;
                             }
                             break;
+                        case 5:
+                            if (!(Lemmingove[KliknutyLemming] is Basher))
+                            {
+                                Lemmingove[KliknutyLemming] = new Basher(Lemmingove[KliknutyLemming]);
+                                ZbyvajiciItemy[Selected]--;
+                            }
+                            break;
                     }
                 }
         }
@@ -1172,7 +1284,7 @@ namespace TheLems
         public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            Lemmingove = new Lemming[20];
+            Lemmingove = new Lemming[1];
             Selected = 0;
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
@@ -1194,9 +1306,9 @@ namespace TheLems
 
 
             //FORTESTING
-            Spawny = new Spawn[2];
-            Spawny[0] = new Spawn(30, new Point(500, 300));
-            Spawny[1] = new Spawn(25, new Point(200, 200));
+            Spawny = new Spawn[1];
+            Spawny[0] = new Spawn(30, new Point(400, 300));
+            //Spawny[1] = new Spawn(25, new Point(200, 200));
         }
 
 
