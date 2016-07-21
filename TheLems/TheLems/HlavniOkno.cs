@@ -53,7 +53,7 @@ namespace TheLems
 
             Stav = State.Menu;
 
-            SwitchToGame("1");
+            SwitchToGame("2");
 
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
@@ -80,8 +80,9 @@ namespace TheLems
 
         private void PictureBoxGame_MouseUp(object sender, MouseEventArgs e)
         {
-            e.Location.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
-            Hra.LemmingsClick(e.Location);
+            Point Klik = e.Location;
+            Klik.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
+            Hra.LemmingsClick(Klik);
             ButtonNumbersDraw();
         }
 
@@ -280,7 +281,7 @@ namespace TheLems
                             Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
                     }
 
-                    ZobrazenaCast = new Rectangle(0, 0, 1280, 500); //FORTESTING
+                    ZobrazenaCast = new Rectangle(0, 0, 1280, 648); //FORTESTING
 
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
                     Hra.Selected = 1;
@@ -1265,7 +1266,36 @@ namespace TheLems
             return navrat;
         }
 
-        private int[] LemmingoveVKurzoru(Point StredKurzoru)
+        public string TypAPocetLemminguVKurzoru(Point StredKurzoru, out int Pocet) //Lze jednoduse predelat, aby spocitalo pocet 
+                                                                                    //daneho typu
+        {
+            int VKurzoru = LemmingoveVKurzoru(StredKurzoru,out Pocet);
+            if (VKurzoru != -1)
+            {
+                if (Lemmingove[VKurzoru] is Walker)
+                    return "Walker";
+                else if (Lemmingove[VKurzoru] is Climber)
+                    return "Climber";
+                else if (Lemmingove[VKurzoru] is Floater)
+                    return "Floater";
+                else if (Lemmingove[VKurzoru] is Blocker)
+                    return "Blocker";
+                else if (Lemmingove[VKurzoru] is Builder)
+                    return "Builder";
+                else if (Lemmingove[VKurzoru] is Basher)
+                    return "Bahser";
+                else if (Lemmingove[VKurzoru] is Miner)
+                    return "Miner";
+                else if (Lemmingove[VKurzoru] is Digger)
+                    return "Digger";
+                else
+                    return "";
+            }
+            else
+                return "";      
+        }
+
+        private int LemmingoveVKurzoru(Point StredKurzoru, out int Pocet) //Vraci indexi lemingu v poli Lemmingove
         {
             int[] VKurzoru = new int[AktualniPocetZivichLemmingu + 1];
             Point LevyHorniRoh = StredKurzoru;
@@ -1286,6 +1316,7 @@ namespace TheLems
                 }  
             }
 
+            Pocet = TempInt - 1;
             VKurzoru[TempInt] = -1; //Zarazka
 
             //Presunuti minimalni vzdalenosti na pozici 0
@@ -1310,18 +1341,22 @@ namespace TheLems
             VKurzoru[MinIndex] = TempInt;
             
 
-            return VKurzoru;
+            return VKurzoru[0];
         }
 
         public void LemmingsClick(Point PoziceMysivMape)
         {
-            int KliknutyLemming = -1; //index v poli lemingu
-            int[] VKurzoru = LemmingoveVKurzoru(PoziceMysivMape);
+            int ThrowAway;
+            int KliknutyLemming = LemmingoveVKurzoru(PoziceMysivMape, out ThrowAway); ; //index v poli lemingu
+            
+            //int VKurzoru = 
 
-            if (VKurzoru[0] != -1)
+            /* pokud bych cchtel vracet zase pole
+            if (VKurzoru != -1)
             {
-                KliknutyLemming = VKurzoru[0];
+                KliknutyLemming = VKurzoru;
             }
+            */
 
             if (KliknutyLemming >= 0)
                 if (ZbyvajiciItemy[Selected] > 0)
@@ -1426,7 +1461,7 @@ namespace TheLems
         public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            Lemmingove = new Lemming[1];
+            Lemmingove = new Lemming[100];
             Selected = 0;
             AktualniPocetZivichLemmingu = 0;
             PocetSpawnutych = 0;
@@ -1448,9 +1483,9 @@ namespace TheLems
 
 
             //FORTESTING
-            Spawny = new Spawn[1];
-            Spawny[0] = new Spawn(30, new Point(400, 300));
-            //Spawny[1] = new Spawn(25, new Point(200, 200));
+            Spawny = new Spawn[2];
+            Spawny[0] = new Spawn(30, new Point(400, 600));
+            Spawny[1] = new Spawn(25, new Point(200, 600));
         }
 
 
