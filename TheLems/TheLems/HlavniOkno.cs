@@ -19,10 +19,10 @@ namespace TheLems
         enum State { Menu, Hra, Pauza }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
-        Bitmap ToPictureBoxGame, ToPictureBoxButtons, Popredi, Pozadi, TlacitkaUp, TlacitkaDown;
+        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Game, Popredi, Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
-        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons;
+        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaGame;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         DateTime Cas; //FORTESTING
@@ -32,31 +32,7 @@ namespace TheLems
         {
             InitializeComponent();
 
-
-
-            ToPictureBoxGame = new Bitmap(1280, 648);
-            GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
-            PictureBoxGame.Image = ToPictureBoxGame;
-            PictureBoxGame.Height = ToPictureBoxGame.Height;
-            PictureBoxGame.Width = ToPictureBoxGame.Width;
-
-            PictureBoxButtons.Left = 0;
-            PictureBoxButtons.Top = 648;
-
-            PictureBoxButtons.Height = 120;
-            PictureBoxButtons.Width = 840;
-
-
-            this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxButtons.Height);
-
-
-
-            Stav = State.Menu;
-
-            SwitchToGame("2");
-
-            //NASTAVENI RYCHLOSTI
-            Timer.Interval = Konstanty.Rychlosthry;
+            InitializeState();
         }
 
 
@@ -70,6 +46,7 @@ namespace TheLems
             DrawInfoTransfer DrawInfo = Hra.Tick();
             ImpactDraw(DrawInfo);
             GameDraw(DrawInfo);
+            MapDraw(DrawInfo);
         }
 
         private void PictureBoxGame_MouseMove(object sender, MouseEventArgs e)
@@ -242,6 +219,42 @@ namespace TheLems
     
         // MOJE METODY
 
+        private void InitializeState()//dalo by se udelat ve form designeru, ale tady se to lepe meni a je to vse pohromade
+        {
+            PictureBoxGame.Left = 0;
+            PictureBoxGame.Top = 0;
+            PictureBoxGame.Height = 598;
+            PictureBoxGame.Width = 1280;
+
+            PictureBoxText.Left = 0;
+            PictureBoxText.Top = 598;
+            PictureBoxText.Height = 50;
+            PictureBoxText.Width = 840;
+
+            PictureBoxButtons.Left = 0;
+            PictureBoxButtons.Top = 648;
+            PictureBoxButtons.Height = 120;
+            PictureBoxButtons.Width = 840;
+
+            PictureBoxMap.Left = 840;
+            PictureBoxMap.Top = 598;
+            PictureBoxMap.Height = 170;
+            PictureBoxMap.Width = 440;
+
+            PictureBoxMenu.Top = 0;
+            PictureBoxMenu.Left = 0;
+            PictureBoxMenu.Height = 768;
+            PictureBoxMenu.Width = 1280;
+
+            this.ClientSize = new Size(PictureBoxMenu.Width, PictureBoxMenu.Height);
+
+            Stav = State.Menu;
+
+            SwitchToGame("2");
+            //NASTAVENI RYCHLOSTI
+            Timer.Interval = Konstanty.Rychlosthry;
+        }
+
         private void SwitchToMenu()
         {
 
@@ -255,10 +268,18 @@ namespace TheLems
             {
                 case State.Menu:
                     //Menu.Dispose();
+                    PictureBoxMenu.Hide();
                     Stav = State.Hra;
+
+
                     PictureBoxGame.Show();
                     PictureBoxButtons.Show();
+                    PictureBoxText.Show();
+                    PictureBoxMap.Show();
 
+                    ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
+                    GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
+                    PictureBoxGame.Image = ToPictureBoxGame;
 
                     Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
                     GrafikaGameLandscape = Graphics.FromImage(Popredi);
@@ -268,9 +289,17 @@ namespace TheLems
                     TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
                     TlacitkaDown = new Bitmap(@"Animations\TlacitkaDown.png");
                     ToPictureBoxButtons = new Bitmap(TlacitkaUp.Width, TlacitkaUp.Height);
-
                     PictureBoxButtons.Image = ToPictureBoxButtons;
                     GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
+
+                    Game = new Bitmap(Popredi.Width, Popredi.Height);
+                    GrafikaGame = Graphics.FromImage(Game);
+
+                    ToPictureBoxMap = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
+                    PictureBoxMap.Image = ToPictureBoxMap;
+                    GrafikaMap = Graphics.FromImage(ToPictureBoxMap);
+                    PozadiMini = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
+                    Graphics.FromImage(PozadiMini).DrawImage(Pozadi, 0, 0, PictureBoxMap.Width - 10, PictureBoxMap.Height - 10);
 
                     Bitmap TempBMP;
                     TempBMP = new Bitmap(@"Animations\ZidiTest.png");
@@ -281,7 +310,9 @@ namespace TheLems
                             Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
                     }
 
-                    ZobrazenaCast = new Rectangle(0, 0, 1280, 648); //FORTESTING
+                    ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
+
+                    this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
 
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
                     Hra.Selected = 1;
@@ -360,14 +391,10 @@ namespace TheLems
 
         private void GameDraw(DrawInfoTransfer DrawInfo)
         {
-
-
-            CheckMousePosition(); // nacteni lemmingu v kurzoru
-
-            GrafikaGameDisplay.Clear(Color.Black); //Vymazani obrazovky
-            GrafikaGameDisplay.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
-            GrafikaGameDisplay.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
-            GrafikaGameDisplay.DrawRectangle(Pens.Chocolate, new Rectangle(PoziceMysiObrazovka.X - 5, PoziceMysiObrazovka.Y - 5, 10, 10)); //FORTESTING
+            GrafikaGame.Clear(Color.Black); //Vymazani obrazovky
+            GrafikaGame.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGame.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            
           
             //Draw Lemmings
             int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
@@ -378,11 +405,11 @@ namespace TheLems
                 //Pozice leveho horniho rohu lemma
                 PoziceLemmaObrazovkaX = Lemming.Pozice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
                 //Vyradit lemy mimo zobrazenou plochu
-                if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width))
+                if ((PoziceLemmaObrazovkaX > -Konstanty.velikostLemaX) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width))
                 {
                     //Pozice leveho horniho rohu lemma
                     PoziceLemmaObrazovkaY = Lemming.Pozice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
-                    if ((PoziceLemmaObrazovkaY > 0) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
+                    if ((PoziceLemmaObrazovkaY > -Konstanty.velikostLemaY) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
                     {
                         if (Lemming.Typ >= 0)
                         {
@@ -402,11 +429,26 @@ namespace TheLems
 
                 Lemming = Lemming.Dalsi;
             }
-            
+
+
             GrafikaGameDisplay.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
             GrafikaGameDisplay.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
             PictureBoxGame.Refresh();
             UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
+        }
+
+        private void MapDraw(DrawInfoTransfer DrawInfo)
+        {
+            GrafikaMap.Clear(Color.Black);
+            GrafikaMap.DrawImage(PozadiMini, 5, 5);
+            GrafikaMap.DrawImage(Popredi, 5, 5, PictureBoxMap.Width - 10,PictureBoxMap.Height - 10);
+            //GrafikaMap.DrawRectangle(Pens.White,)
+            PictureBoxMap.Refresh();
+        }
+
+        private void TextDraw()
+        {
+
         }
 
         private void ButtonNumbersDraw()
@@ -444,10 +486,9 @@ namespace TheLems
                 ZobrazenaCast.Y += y;
         }
     }
-    class Hra
-    {
 
-    }
+
+    
 
     class DrawInfoTransfer
     {
