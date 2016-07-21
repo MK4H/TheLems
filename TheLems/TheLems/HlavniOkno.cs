@@ -19,7 +19,7 @@ namespace TheLems
         enum State { Menu, Hra, Pauza }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
-        Bitmap ToPictureBoxGame, Popredi, Pozadi, TlacitkaUp;
+        Bitmap ToPictureBoxGame, ToPictureBoxButtons, Popredi, Pozadi, TlacitkaUp, TlacitkaDown;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons;
@@ -82,7 +82,7 @@ namespace TheLems
         {
             e.Location.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
             Hra.LemmingsClick(e.Location);
-            ButtonDraw();
+            ButtonNumbersDraw();
         }
 
         private void HlavniOkno_KeyDown(object sender, KeyEventArgs e)
@@ -94,35 +94,39 @@ namespace TheLems
 
             switch (e.KeyCode)
             {
-                case Keys.D0:
-                    Hra.Selected = 0;
-                    break;
                 case Keys.D1:
-                    Hra.Selected = 1;
+                    Hra.Selected = 0;
+                    ButtonClickDraw(3);
                     break;
                 case Keys.D2:
-                    Hra.Selected = 2;
+                    Hra.Selected = 1;
+                    ButtonClickDraw(4);
                     break;
                 case Keys.D3:
-                    Hra.Selected = 3;
+                    Hra.Selected = 2;
+                    ButtonClickDraw(5);
                     break;
                 case Keys.D4:
-                    Hra.Selected = 4;
+                    Hra.Selected = 3;
+                    ButtonClickDraw(6);
                     break;
                 case Keys.D5:
-                    Hra.Selected = 5;
+                    Hra.Selected = 4;
+                    ButtonClickDraw(7);
                     break;
                 case Keys.D6:
-                    Hra.Selected = 6;
+                    Hra.Selected = 5;
+                    ButtonClickDraw(8);
                     break;
                 case Keys.D7:
-                    Hra.Selected = 7;
+                    Hra.Selected = 6;
+                    ButtonClickDraw(9);
                     break;
                 case Keys.D8:
-                    Hra.Selected = 8;
+                    Hra.Selected = 7;
+                    ButtonClickDraw(8);
                     break;
-                case Keys.D9:
-                    Hra.Selected = 9;
+                case Keys.Escape:
                     break;
             }
 
@@ -189,16 +193,22 @@ namespace TheLems
                         throw new Exception();
                     case 1:
                         Hra.ZmenaRychostiSpawnu(-1);
+                        ButtonNumbersDraw();
                         break;
                     case 2:
                         Hra.ZmenaRychostiSpawnu(1);
+                        ButtonNumbersDraw();
+                        break;
+                    case 11:
+                        break;
+                    case 12:
                         break;
                     default:
                         Hra.Selected = KliknutyPole - 3;
+                        ButtonClickDraw(KliknutyPole);
                         break;
                 }
 
-                ButtonDraw();
             }
         }
 
@@ -228,7 +238,7 @@ namespace TheLems
             }
         }
 
-
+    
         // MOJE METODY
 
         private void SwitchToMenu()
@@ -255,9 +265,11 @@ namespace TheLems
 
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
                     TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
+                    TlacitkaDown = new Bitmap(@"Animations\TlacitkaDown.png");
+                    ToPictureBoxButtons = new Bitmap(TlacitkaUp.Width, TlacitkaUp.Height);
 
-                    PictureBoxButtons.Image = TlacitkaUp;
-                    GrafikaButtons = Graphics.FromImage(TlacitkaUp);
+                    PictureBoxButtons.Image = ToPictureBoxButtons;
+                    GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
 
                     Bitmap TempBMP;
                     TempBMP = new Bitmap(@"Animations\ZidiTest.png");
@@ -272,7 +284,7 @@ namespace TheLems
 
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
                     Hra.Selected = 1;
-                    ButtonDraw();
+                    ButtonClickDraw(3);
 
                     Timer.Start();
                     break;
@@ -358,43 +370,45 @@ namespace TheLems
           
             //Draw Lemmings
             int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
+            DrawLemmings Lemming = DrawInfo.Lemmings;
 
-            while (DrawInfo.Lemmings != null) //Projet spojak
+            while (Lemming != null) //Projet spojak
             {
                 //Pozice leveho horniho rohu lemma
-                PoziceLemmaObrazovkaX = DrawInfo.Lemmings.Pozice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
+                PoziceLemmaObrazovkaX = Lemming.Pozice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
                 //Vyradit lemy mimo zobrazenou plochu
                 if ((PoziceLemmaObrazovkaX > 0) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width))
                 {
                     //Pozice leveho horniho rohu lemma
-                    PoziceLemmaObrazovkaY = DrawInfo.Lemmings.Pozice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
+                    PoziceLemmaObrazovkaY = Lemming.Pozice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
                     if ((PoziceLemmaObrazovkaY > 0) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
                     {
-                        if (DrawInfo.Lemmings.Typ >= 0)
+                        if (Lemming.Typ >= 0)
                         {
                             //Nakreslit Lemma
-                            GrafikaGameDisplay.DrawImage(ObrazkyLemmu[DrawInfo.Lemmings.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
+                            GrafikaGameDisplay.DrawImage(ObrazkyLemmu[Lemming.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
 
                             //Pripadne nakreslit cas do detonace
-                            if (DrawInfo.Lemmings.TicksToDetonation > 0)
+                            if (Lemming.TicksToDetonation > 0)
                                 GrafikaGameDisplay.DrawString(
-                                    Math.Ceiling(Convert.ToDouble(DrawInfo.Lemmings.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
+                                    Math.Ceiling(Convert.ToDouble(Lemming.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
                                     new Font("Verdana", 10), Brushes.White,
-                                    PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY - 20);
+                                    PoziceLemmaObrazovkaX + 6, PoziceLemmaObrazovkaY - 15);
                         }
                     }
                 }
 
 
-                DrawInfo.Lemmings = DrawInfo.Lemmings.Dalsi;
+                Lemming = Lemming.Dalsi;
             }
+            
             GrafikaGameDisplay.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
             GrafikaGameDisplay.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
             PictureBoxGame.Refresh();
             UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
         }
 
-        private void ButtonDraw()
+        private void ButtonNumbersDraw()
         {
             string AktString;
             Font FontProKresleni = new Font("Verdana", 10, FontStyle.Bold);
@@ -406,6 +420,13 @@ namespace TheLems
                 GrafikaButtons.DrawString(AktString, FontProKresleni, Brushes.White, 30 + 70 * i, 35);
             }
             PictureBoxButtons.Refresh();
+        }
+
+        private void ButtonClickDraw(int Clicked)
+        {
+            GrafikaButtons.DrawImage(TlacitkaUp, 0, 0);
+            GrafikaButtons.DrawImage(TlacitkaDown, (Clicked - 1) * 70, 0, new Rectangle((Clicked - 1) * 70, 0, 70, 120), GraphicsUnit.Pixel);
+            ButtonNumbersDraw();
         }
 
         private void CheckMousePosition() //Get Lemmingy v kurzoru
