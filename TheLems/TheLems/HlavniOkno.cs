@@ -444,6 +444,10 @@ namespace TheLems
                 ZobrazenaCast.Y += y;
         }
     }
+    class Hra
+    {
+
+    }
 
     class DrawInfoTransfer
     {
