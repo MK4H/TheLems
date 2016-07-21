@@ -5,7 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace TheLems
@@ -36,7 +36,6 @@ namespace TheLems
             InitializeState();
         }
 
-
         //AUTOMATICKE METODY
 
 
@@ -46,8 +45,8 @@ namespace TheLems
 
             DrawInfoTransfer DrawInfo = Hra.Tick();
             ImpactDraw(DrawInfo);
-            GameDraw(DrawInfo);
             MapDraw(DrawInfo);
+            GameDraw(DrawInfo);      
         }
 
         private void PictureBoxGame_MouseMove(object sender, MouseEventArgs e)
