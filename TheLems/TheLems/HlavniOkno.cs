@@ -16,11 +16,12 @@ namespace TheLems
     {
 
         Point[] MenuCoordinates;
-        enum State { Menu, Hra, Pauza }
+        enum State { Menu, Hra, Pauza, End }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
-        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Popredi, Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown;
+        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Popredi,
+            Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap;
@@ -43,10 +44,15 @@ namespace TheLems
         {
             Cas = DateTime.Now; //FORTESTING
 
-            DrawInfoTransfer DrawInfo = Hra.Tick();
-            ImpactDraw(DrawInfo);
-            MapDraw(DrawInfo);
-            GameDraw(DrawInfo);      
+            if (Hra.TheEnd() != 0)
+            {
+                DrawInfoTransfer DrawInfo = Hra.Tick();
+                ImpactDraw(DrawInfo);
+                MapDraw(DrawInfo);
+                GameDraw(DrawInfo);
+            }
+            else
+                SwitchToEnd(Hra.TheEnd());
         }
 
         private void PictureBoxGame_MouseMove(object sender, MouseEventArgs e)
@@ -327,6 +333,11 @@ namespace TheLems
             }
         }
 
+        private void SwitchToEnd(int Konec)
+        {
+
+        }
+
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
         {
             //Vykresli nove schody do popredi
@@ -441,11 +452,8 @@ namespace TheLems
             GrafikaMap.Clear(Color.Black);
             GrafikaMap.DrawImage(PozadiMini, 5, 5);
             GrafikaMap.DrawImage(Popredi, 5, 5, PictureBoxMap.Width - 10,PictureBoxMap.Height - 10);
-            GrafikaMap.DrawRectangle(Pens.White, new Rectangle(Convert.ToInt32( Math.Ceiling(ZobrazenaCast.X * PomerX + 5)), 
-                Convert.ToInt32(Math.Ceiling( ZobrazenaCast.Y * PomerY + 5)),
-                Convert.ToInt32(Math.Floor(ZobrazenaCast.Width * PomerX)),
-                Convert.ToInt32(Math.Floor(ZobrazenaCast.Height * PomerY))));
-
+            
+            //Lemmingove
             DrawLemmings Lemming;
             Lemming = DrawInfo.Lemmings;
 
@@ -460,6 +468,11 @@ namespace TheLems
                 }
                 Lemming = Lemming.Dalsi;
             }
+            //Obdelnik zobrazene casti
+            GrafikaMap.DrawRectangle(Pens.White, new Rectangle(Convert.ToInt32(Math.Ceiling(ZobrazenaCast.X * PomerX + 5)),
+                Convert.ToInt32(Math.Ceiling(ZobrazenaCast.Y * PomerY + 5)),
+                Convert.ToInt32(Math.Floor(ZobrazenaCast.Width * PomerX)),
+                Convert.ToInt32(Math.Floor(ZobrazenaCast.Height * PomerY))));
             PictureBoxMap.Refresh();
         }
 
@@ -648,7 +661,7 @@ namespace TheLems
             protected int _TicksToDetonation;
             public int TicksToDetonation { get { return _TicksToDetonation; } protected set { _TicksToDetonation = value; } }
 
-            public int Tick(Bitmap Popredi, Blocker[] Blockerz)
+            public int Tick(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if(detonate)
                 {
@@ -658,11 +671,11 @@ namespace TheLems
                     }
                 }
 
-                return Move(Popredi, Blockerz);
+                return Move(Popredi, Blockerz, Cile);
 
             }
             //hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec, 4 - otocil se
-            protected virtual int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected virtual int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
@@ -678,7 +691,7 @@ namespace TheLems
                     {
                         Falling = 0;
                     }
-                    return Sideways(Popredi, Blockerz);
+                    return Sideways(Popredi, Blockerz, Cile);
                 }
             }
 
@@ -697,10 +710,17 @@ namespace TheLems
                 return 10;
             }
 
-            protected virtual int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            protected virtual int Sideways(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Smer != 0)
                 {
+                    //Jestli neni v cili
+                    for (int i = 0; i < Cile.Length; i++)
+                    {
+                        if (Cile[i].Contains(Pozice))
+                            return 11;
+                    }
+
                     int Posun = 0;
                     Posun = (Konstanty.velikostLemaX / 2) * (-Smer);
 
@@ -823,11 +843,11 @@ namespace TheLems
 
             }
 
-            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Typ == 0)
                 {
-                    int Navrat = base.Move(Popredi, Blockerz);
+                    int Navrat = base.Move(Popredi, Blockerz, Cile);
                     if (Navrat == 4)
                     {
                         Typ = 1;
@@ -880,7 +900,7 @@ namespace TheLems
             }
             
 
-            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Popredi.GetPixel(Pozice.X, Pozice.Y + 1).A == 0)
                 {
@@ -893,7 +913,7 @@ namespace TheLems
                     {
                         return 3;
                     }
-                    return Sideways(Popredi, Blockerz);
+                    return Sideways(Popredi, Blockerz, Cile);
                 }
             }
 
@@ -948,7 +968,7 @@ namespace TheLems
             int Zasoba;
             int Waiting;
 
-            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Waiting > 0)
                 {
@@ -965,7 +985,7 @@ namespace TheLems
                     }
                     else
                     {
-                        int Navrat = base.Sideways(Popredi, Blockerz);
+                        int Navrat = base.Sideways(Popredi, Blockerz, Cile);
                         switch (Navrat)
                         {
                             case 4://Odrazil se od steny, zmena zpet na walkera
@@ -1010,16 +1030,16 @@ namespace TheLems
         {
             int Waiting;
 
-            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
-                int Navrat = base.Move(Popredi, Blockerz);
+                int Navrat = base.Move(Popredi, Blockerz, Cile);
                 if (Navrat == 10)
                     return 3;
                 else
                     return Navrat;
             }
 
-            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Waiting > 0) //delay pro animaci kopani
                 {
@@ -1033,7 +1053,7 @@ namespace TheLems
                 }
                 else if (Waiting > -16) //Posun pro dalsi kop, pokud neco je v ceste, pak indestructible a odraz
                 {
-                    if (base.Sideways(Popredi, Blockerz) != 0)
+                    if (base.Sideways(Popredi, Blockerz, Cile) != 0)
                         return 3;
                     else
                     {
@@ -1043,7 +1063,7 @@ namespace TheLems
                 }
                 else if (Waiting == -16) //Konec posunu, pred nim by mela byt stena, pokud neni, tak se uz prokopal skrz a konec
                 {
-                    if (base.Sideways(Popredi, Blockerz) == 0)
+                    if (base.Sideways(Popredi, Blockerz, Cile) == 0)
                         return 3;
                     else
                     {
@@ -1056,7 +1076,7 @@ namespace TheLems
                     // pro inicializaci pri kliku, potom uz by se sem nikdy nemelo dostat
                     // je potreba dojit k stene, dat urcitou toleranci pri kliknuti, ze nemusi bejt uplne u steny
                 {
-                    if (base.Sideways(Popredi, Blockerz) != 0)
+                    if (base.Sideways(Popredi, Blockerz, Cile) != 0)
                     {
                         Smer *= -1;
                         Waiting = 20;
@@ -1071,7 +1091,7 @@ namespace TheLems
                 else
                 {
                     //konec tolerance, pokud ani tady neni stena, pak nema co kopat a zmena zpet
-                    if (base.Sideways(Popredi, Blockerz) == 0)
+                    if (base.Sideways(Popredi, Blockerz, Cile) == 0)
                         return 3;
                     else
                     {
@@ -1100,9 +1120,9 @@ namespace TheLems
         {
             int Waiting;
 
-            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
-                int Navrat = base.Move(Popredi, Blockerz);
+                int Navrat = base.Move(Popredi, Blockerz, Cile);
                 if (Navrat == 10 && Waiting != -1)
                     return 3;
                 else if (Navrat == 10 && Waiting == -1) //Po kazdym kopnuti, tedy pri waiting == -1, kousek pada
@@ -1116,7 +1136,7 @@ namespace TheLems
                     return Navrat;
             }
 
-            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Waiting > 0) //delay pro animaci kopani
                 {
@@ -1130,7 +1150,7 @@ namespace TheLems
                 }
                 else if (Waiting > -13) //Posun
                 {
-                    if (base.Sideways(Popredi, Blockerz) != 0)
+                    if (base.Sideways(Popredi, Blockerz, Cile) != 0)
                         return 3;
                     else
                     {
@@ -1165,9 +1185,9 @@ namespace TheLems
         {
             int Waiting;
 
-            protected override int Move(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
-                int Navrat = base.Move(Popredi, Blockerz);
+                int Navrat = base.Move(Popredi, Blockerz, Cile);
 
                 if (Navrat == 10 && Falling == 2)
                 {
@@ -1180,7 +1200,7 @@ namespace TheLems
                     return Navrat;
             }
 
-            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz)
+            protected override int Sideways(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
                 if (Waiting > 0)
                 {
@@ -1213,13 +1233,21 @@ namespace TheLems
         Blocker[] Blockerz; 
         Spawn[] Spawny;
         Bitmap Popredi;
+        Rectangle[] Cile;
         int[] ZbyvajiciItemy;
         public int Selected; //Zvoleny button
-        int AktualniPocetZivichLemmingu;
+        int _AktualniPocetZivichLemmingu;
+        public int AktualniPocetZivichLemmingu
+        {
+            get{ return _AktualniPocetZivichLemmingu; }
+            private set { _AktualniPocetZivichLemmingu = value; }
+        }
         int PocetSpawnutych;
         int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
         int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
         int AktPocetBlockeru;
+        int PocetVCili;
+        int HraniceProVitezstvi;
 
         public DrawInfoTransfer Tick()
         {
@@ -1228,6 +1256,11 @@ namespace TheLems
             DrawStairs AktualniSchod = navrat.Stairs;
             DrawSpace AktualniSpace = navrat.Spaces;
             
+            if (BOOOOMTimer == 0)
+            {
+                PocetSpawnutych = Lemmingove.Length;
+            }
+            
             //Move
             int Cyklus = 0; //v podstate vlastni for cyklus s promenlivym koncem a vice cyklech na jednom i
             while (Cyklus < AktualniPocetZivichLemmingu)
@@ -1235,9 +1268,9 @@ namespace TheLems
                 AktualniLemming.Dalsi = new DrawLemmings(Lemmingove[Cyklus].Pozice,
                             Lemmingove[Cyklus].Typ, Lemmingove[Cyklus].Smer, false, Lemmingove[Cyklus].TicksToDetonation);
 
-                switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz))
+                switch (Lemmingove[Cyklus].Tick(Popredi, Blockerz, Cile))
                 // 0 - zije, 1 - spadnul, 2 - detonate, 3 - zmena na walkera, 4 - odraz od steny, 5 - odraz od blockera
-                // 6 - build stair, 7 - kop horizontalne, 8 - kop diagonalne, 9 - kop dolu, 10 - pada
+                // 6 - build stair, 7 - kop horizontalne, 8 - kop diagonalne, 9 - kop dolu, 10 - pada, 11 - cil
                 {
                    
                     case 1: //Spadnul
@@ -1282,6 +1315,13 @@ namespace TheLems
                     case 9://Kop dolu
                         AktualniSpace.Dalsi = new DrawSpace(3, Lemmingove[Cyklus].Pozice, Lemmingove[Cyklus].Smer);
                         AktualniSpace = AktualniSpace.Dalsi;
+                        break;
+                    case 11://cil
+                        AktualniLemming.Death = true;
+                        PocetVCili++;
+
+                        Lemmingove[Cyklus] = Lemmingove[--AktualniPocetZivichLemmingu];//Win
+                        Lemmingove[AktualniPocetZivichLemmingu] = null;
                         break;
                 }
                 AktualniLemming = AktualniLemming.Dalsi;
@@ -1520,6 +1560,18 @@ namespace TheLems
             }
         }
 
+        public int TheEnd()//Jestli uz jsou vsichni naspawnovani a mrtvi
+        {
+            if (PocetSpawnutych < Lemmingove.Length)
+                return 0;
+            else if (AktualniPocetZivichLemmingu > 0)
+                return 0;
+            else if (PocetVCili > HraniceProVitezstvi)
+                return 1;
+            else
+                return 0;
+        }
+
         public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
@@ -1534,6 +1586,7 @@ namespace TheLems
             BOOOOM = -1;
             BOOOOMTimer = 5 * 1000 / Konstanty.Rychlosthry; //chci aby to bylo 5 sekund
             AktPocetBlockeru = 0;
+            PocetVCili = 0;
             
             //FORTESTING
             for (int i = 0; i < ZbyvajiciItemy.Length; i++)
@@ -1548,6 +1601,11 @@ namespace TheLems
             Spawny = new Spawn[2];
             Spawny[0] = new Spawn(30, new Point(400, 600));
             Spawny[1] = new Spawn(25, new Point(200, 600));
+
+            Cile = new Rectangle[1];
+            Cile[0] = new Rectangle(1400, 625, 50, 50);
+
+            HraniceProVitezstvi = 90;
         }
 
 
