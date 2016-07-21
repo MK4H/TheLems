@@ -392,45 +392,37 @@ namespace TheLems
         private void GameDraw(DrawInfoTransfer DrawInfo)
         {
             GrafikaGame.Clear(Color.Black); //Vymazani obrazovky
-            GrafikaGame.DrawImage(Pozadi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
-            GrafikaGame.DrawImage(Popredi, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
+            GrafikaGame.DrawImage(Pozadi, 0, 0);
+            GrafikaGame.DrawImage(Popredi, 0, 0);
             
           
             //Draw Lemmings
-            int PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY;
             DrawLemmings Lemming = DrawInfo.Lemmings;
 
             while (Lemming != null) //Projet spojak
             {
                 //Pozice leveho horniho rohu lemma
-                PoziceLemmaObrazovkaX = Lemming.Pozice.X - ZobrazenaCast.X - (Konstanty.velikostLemaX / 2);
-                //Vyradit lemy mimo zobrazenou plochu
-                if ((PoziceLemmaObrazovkaX > -Konstanty.velikostLemaX) && (PoziceLemmaObrazovkaX < ZobrazenaCast.Width))
-                {
-                    //Pozice leveho horniho rohu lemma
-                    PoziceLemmaObrazovkaY = Lemming.Pozice.Y - ZobrazenaCast.Y - Konstanty.velikostLemaY;
-                    if ((PoziceLemmaObrazovkaY > -Konstanty.velikostLemaY) && (PoziceLemmaObrazovkaY < ZobrazenaCast.Height))
-                    {
-                        if (Lemming.Typ >= 0)
-                        {
-                            //Nakreslit Lemma
-                            GrafikaGameDisplay.DrawImage(ObrazkyLemmu[Lemming.Typ], PoziceLemmaObrazovkaX, PoziceLemmaObrazovkaY);
+                Lemming.Pozice.Offset(-Konstanty.velikostLemaX / 2, -Konstanty.velikostLemaY);
 
-                            //Pripadne nakreslit cas do detonace
-                            if (Lemming.TicksToDetonation > 0)
-                                GrafikaGameDisplay.DrawString(
-                                    Math.Ceiling(Convert.ToDouble(Lemming.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
-                                    new Font("Verdana", 10), Brushes.White,
-                                    PoziceLemmaObrazovkaX + 6, PoziceLemmaObrazovkaY - 15);
-                        }
-                    }
+                if (Lemming.Typ >= 0)
+                {
+                    //Nakreslit Lemma
+                    GrafikaGame.DrawImage(ObrazkyLemmu[Lemming.Typ], Lemming.Pozice);
+
+                    //Pripadne nakreslit cas do detonace
+                    if (Lemming.TicksToDetonation > 0)
+                        GrafikaGame.DrawString(
+                            Math.Ceiling(Convert.ToDouble(Lemming.TicksToDetonation * Konstanty.Rychlosthry) / 1000).ToString(),
+                            new Font("Verdana", 10), Brushes.White,
+                            Lemming.Pozice.X + 6, Lemming.Pozice.Y - 15);
                 }
+               
 
 
                 Lemming = Lemming.Dalsi;
             }
 
-
+            GrafikaGameDisplay.DrawImage(Game, 0, 0, ZobrazenaCast, GraphicsUnit.Pixel);
             GrafikaGameDisplay.DrawString(UbehlyCas.Milliseconds.ToString(), new Font("Verdana", 10), Brushes.White, 50, 50);//FORTESTING
             GrafikaGameDisplay.DrawString(PoziceMysiObrazovka.X.ToString(), new Font("Verdana", 10), Brushes.White, 200, 50);//FORTESTING
             PictureBoxGame.Refresh();
