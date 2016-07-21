@@ -19,10 +19,10 @@ namespace TheLems
         enum State { Menu, Hra, Pauza }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
-        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Game, Popredi, Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown;
+        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Popredi, Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
-        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaGame;
+        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         DateTime Cas; //FORTESTING
@@ -292,8 +292,6 @@ namespace TheLems
                     PictureBoxButtons.Image = ToPictureBoxButtons;
                     GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
 
-                    Game = new Bitmap(Popredi.Width, Popredi.Height);
-                    GrafikaGame = Graphics.FromImage(Game);
 
                     ToPictureBoxMap = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
                     PictureBoxMap.Image = ToPictureBoxMap;
