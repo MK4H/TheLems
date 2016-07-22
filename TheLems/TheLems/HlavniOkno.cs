@@ -14,9 +14,8 @@ namespace TheLems
 
     public partial class HlavniOkno : Form
     {
-
-        Point[] MenuCoordinates;
-        enum State { Menu, Hra, Pauza, End }
+        Rectangle[] MenuTlacitka;
+        enum State { Menu, Hra, Pauza, End, Begin,First }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
@@ -43,7 +42,6 @@ namespace TheLems
         private void Timer_Tick(object sender, EventArgs e)
         {
             Cas = DateTime.Now; //FORTESTING
-
             if (Hra.TheEnd() == 0)
             {
                 DrawInfoTransfer DrawInfo = Hra.Tick();
@@ -235,7 +233,33 @@ namespace TheLems
             }
         }
 
-    
+        private void PictureBoxMenu_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (MenuTlacitka[i].Contains(e.Location))
+                    {
+                        switch (i)
+                        {
+                            case 0://New Game
+                                SwitchToGame("2");
+                                break;
+                            case 1://Levels
+                                break;
+                            case 2://Ovladani
+                                break;
+                            case 3://About
+                                break;
+                            case 4://Exit
+                                Application.Exit();
+                                break;
+                        }
+                    }
+                }
+            }
+        }
         // MOJE METODY
 
         private void InitializeState()//dalo by se udelat ve form designeru, ale tady se to lepe meni a je to vse pohromade
@@ -267,16 +291,39 @@ namespace TheLems
 
             this.ClientSize = new Size(PictureBoxMenu.Width, PictureBoxMenu.Height);
 
-            Stav = State.Menu;
+            Stav = State.First;
 
-            SwitchToGame("2");
+            SwitchToMenu();
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
         }
 
         private void SwitchToMenu()
         {
-
+            switch (Stav)
+            {
+                case State.Pauza:
+                    break;
+                case State.End:
+                    break;
+                case State.First:
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();                   
+                    break;
+                default:
+                    break;
+            }
+            Stav = State.Menu;
+            MenuTlacitka = new Rectangle[5];
+            MenuTlacitka[0] = new Rectangle(208, 299, 150, 100);
+            MenuTlacitka[1] = new Rectangle(564, 299, 150, 100);
+            MenuTlacitka[2] = new Rectangle(920, 299, 150, 100);
+            MenuTlacitka[3] = new Rectangle(386, 559, 150, 100);
+            MenuTlacitka[4] = new Rectangle(742, 599, 150, 100);
+            PictureBoxMenu.Image = new Bitmap(@"Animations\Menu.png");
+            PictureBoxMenu.Show();  
         }
 
         private void SwitchToGame(string Level)
@@ -286,10 +333,10 @@ namespace TheLems
             switch (Stav)
             {
                 case State.Menu:
-                    //Menu.Dispose();
-                    PictureBoxMenu.Hide();
                     Stav = State.Hra;
-
+                    MenuTlacitka = null; //uvolnit co nejvice pameti
+                    PictureBoxMenu.Image = null;
+                    PictureBoxMenu.Hide();             
 
                     PictureBoxGame.Show();
                     PictureBoxButtons.Show();
@@ -517,11 +564,11 @@ namespace TheLems
                 Brushes.White, 10, 10);
             GrafikaText.DrawString(PocetVKurzoru.ToString(), new Font("Verdana", 20), Brushes.White, 120, 10);
 
-            Print = "Out " + Hra.AktualniPocetZivichLemmingu.ToString();
+            Print = "Out " + Hra.AktualniPocetZivichLemmingu.ToString() + " of " + Hra.CelkovyPocetLemmingu.ToString();
             GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 220, 10);
 
             Print = "In " + Hra.ProcentVCili() + "%";
-            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 400, 10);
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 490, 10);
 
             Print = "Time " + Cas.ToString("m:ss"); //TODO Predelat na odcitani po ticku
             GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 650, 10);
@@ -714,7 +761,7 @@ namespace TheLems
 
             public int Tick(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
             {
-                if(detonate)
+                if (detonate)
                 {
                     if (TicksToDetonation-- == 0)
                     {
@@ -722,8 +769,14 @@ namespace TheLems
                     }
                 }
 
-                return Move(Popredi, Blockerz, Cile);
-
+                try
+                {
+                    return Move(Popredi, Blockerz, Cile);
+                }
+                catch (ArgumentOutOfRangeException e)
+                {
+                    return 1;
+                }
             }
             //hodnoty 0 - zije, 1 - spadnul, 2 - detonate, 3 - vycerpal special vec, 4 - otocil se
             protected virtual int Move(Bitmap Popredi, Blocker[] Blockerz, Rectangle[] Cile)
@@ -1299,6 +1352,10 @@ namespace TheLems
         int AktPocetBlockeru;
         int PocetVCili;
         int HraniceProVitezstvi;
+        public int CelkovyPocetLemmingu
+        {
+            get { return Lemmingove.Length; }
+        }
 
         public DrawInfoTransfer Tick()
         {

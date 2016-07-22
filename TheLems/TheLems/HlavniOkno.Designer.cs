@@ -90,6 +90,7 @@
             this.PictureBoxMenu.Size = new System.Drawing.Size(1212, 884);
             this.PictureBoxMenu.TabIndex = 4;
             this.PictureBoxMenu.TabStop = false;
+            this.PictureBoxMenu.MouseClick += new System.Windows.Forms.MouseEventHandler(this.PictureBoxMenu_MouseClick);
             // 
             // HlavniOkno
             // 
