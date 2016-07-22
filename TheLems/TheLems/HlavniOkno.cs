@@ -237,29 +237,34 @@ namespace TheLems
         {
             if (e.Button == MouseButtons.Left)
             {
-                for (int i = 0; i < 5; i++)
-                {
-                    if (MenuTlacitka[i].Contains(e.Location))
+                if (Stav == State.Menu)
+                    for (int i = 0; i < 5; i++)
                     {
-                        switch (i)
+                        if (MenuTlacitka[i].Contains(e.Location))
                         {
-                            case 0://New Game
-                                SwitchToGame("2");
-                                break;
-                            case 1://Levels
-                                break;
-                            case 2://Ovladani
-                                break;
-                            case 3://About
-                                break;
-                            case 4://Exit
-                                Application.Exit();
-                                break;
+                            switch (i)
+                            {
+                                case 0://New Game
+                                    SwitchToBegin("2");
+                                    break;
+                                case 1://Levels
+                                    break;
+                                case 2://Ovladani
+                                    break;
+                                case 3://About
+                                    break;
+                                case 4://Exit
+                                    Application.Exit();
+                                    break;
+                            }
+                            break;
                         }
                     }
-                }
+                else
+                    SwitchToGame();
             }
         }
+        
         // MOJE METODY
 
         private void InitializeState()//dalo by se udelat ve form designeru, ale tady se to lepe meni a je to vse pohromade
@@ -326,71 +331,89 @@ namespace TheLems
             PictureBoxMenu.Show();  
         }
 
-        private void SwitchToGame(string Level)
+        private void SwitchToBegin(string Level)             //LOAD EVERITHING
         {
             string cesta = "Levels\\Level" + Level;
-
             switch (Stav)
             {
                 case State.Menu:
-                    Stav = State.Hra;
                     MenuTlacitka = null; //uvolnit co nejvice pameti
+
+                    
+                    break;
+                case State.End:
+                    break;
+            }
+
+            Stav = State.Begin;
+            //PictureBoxMenu.Image = new Bitmap(cesta + "_intro.png");
+
+            //PictureBoxGame inic
+            ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
+            GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
+            PictureBoxGame.Image = ToPictureBoxGame;
+            //PoprediInic
+            Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
+            GrafikaGameLandscape = Graphics.FromImage(Popredi);
+            GrafikaGameLandscape.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+
+            Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
+
+            //Buttons inic
+            TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
+            TlacitkaDown = new Bitmap(@"Animations\TlacitkaDown.png");
+            ToPictureBoxButtons = new Bitmap(TlacitkaUp.Width, TlacitkaUp.Height);
+            PictureBoxButtons.Image = ToPictureBoxButtons;
+            GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
+            //Text inic
+            ToPictureBoxText = new Bitmap(PictureBoxText.Width, PictureBoxText.Height);
+            GrafikaText = Graphics.FromImage(ToPictureBoxText);
+            PictureBoxText.Image = ToPictureBoxText;
+
+            //Map inic
+            ToPictureBoxMap = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
+            PictureBoxMap.Image = ToPictureBoxMap;
+            GrafikaMap = Graphics.FromImage(ToPictureBoxMap);
+            PozadiMini = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
+            Graphics.FromImage(PozadiMini).DrawImage(Pozadi, 0, 0, PictureBoxMap.Width - 10, PictureBoxMap.Height - 10);
+            PomerX = (ToPictureBoxMap.Width - 10) / (double)Popredi.Width; //-10 kvuli cernymu okraji
+            PomerY = (ToPictureBoxMap.Height - 10) / (double)Popredi.Height;
+            //Lemmings load
+            Bitmap TempBMP;
+            TempBMP = new Bitmap(@"Animations\ZidiTest.png");
+            ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
+            ObrazkyLemmuRot = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
+            for (int i = 0; i < ObrazkyLemmu.Length; i++)
+            {
+                ObrazkyLemmu[i] = TempBMP.Clone(new Rectangle(0, i * Konstanty.velikostLemaY,
+                    Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
+                ObrazkyLemmuRot[i] = (Bitmap)ObrazkyLemmu[i].Clone();
+                ObrazkyLemmuRot[i].RotateFlip(RotateFlipType.RotateNoneFlipX);
+            }
+
+            ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
+            //Game inic
+            Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
+        }
+
+        private void SwitchToGame()
+        {
+            
+
+            switch (Stav)
+            {
+                case State.Begin:               
+                    PictureBoxMenu.Hide();
                     PictureBoxMenu.Image = null;
-                    PictureBoxMenu.Hide();             
 
                     PictureBoxGame.Show();
                     PictureBoxButtons.Show();
                     PictureBoxText.Show();
                     PictureBoxMap.Show();
-                    //PictureBoxGame inic
-                    ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
-                    GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
-                    PictureBoxGame.Image = ToPictureBoxGame;
-                        //PoprediInic
-                    Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
-                    GrafikaGameLandscape = Graphics.FromImage(Popredi);
-                    GrafikaGameLandscape.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-
-                    Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
-
-                    //Buttons inic
-                    TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
-                    TlacitkaDown = new Bitmap(@"Animations\TlacitkaDown.png");
-                    ToPictureBoxButtons = new Bitmap(TlacitkaUp.Width, TlacitkaUp.Height);
-                    PictureBoxButtons.Image = ToPictureBoxButtons;
-                    GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
-                    //Text inic
-                    ToPictureBoxText = new Bitmap(PictureBoxText.Width, PictureBoxText.Height);
-                    GrafikaText = Graphics.FromImage(ToPictureBoxText);
-                    PictureBoxText.Image = ToPictureBoxText;
-
-                    //Map inic
-                    ToPictureBoxMap = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
-                    PictureBoxMap.Image = ToPictureBoxMap;
-                    GrafikaMap = Graphics.FromImage(ToPictureBoxMap);
-                    PozadiMini = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
-                    Graphics.FromImage(PozadiMini).DrawImage(Pozadi, 0, 0, PictureBoxMap.Width - 10, PictureBoxMap.Height - 10);
-                    PomerX = (ToPictureBoxMap.Width - 10) / (double) Popredi.Width; //-10 kvuli cernymu okraji
-                    PomerY = (ToPictureBoxMap.Height - 10) / (double) Popredi.Height;
-                    //Lemmings load
-                    Bitmap TempBMP;
-                    TempBMP = new Bitmap(@"Animations\ZidiTest.png");
-                    ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
-                    ObrazkyLemmuRot = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
-                    for (int i = 0; i < ObrazkyLemmu.Length; i++)
-                    {
-                        ObrazkyLemmu[i] = TempBMP.Clone(new Rectangle(0, i * Konstanty.velikostLemaY,
-                            Konstanty.velikostLemaX, Konstanty.velikostLemaY), System.Drawing.Imaging.PixelFormat.DontCare);
-                        ObrazkyLemmuRot[i] = (Bitmap)ObrazkyLemmu[i].Clone();
-                        ObrazkyLemmuRot[i].RotateFlip(RotateFlipType.RotateNoneFlipX);
-                    }
-
-                    ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
+                    
 
                     this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
-                    //Game inic
-                    Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
-                    Hra.Selected = 0;
+                    
                     ButtonClickDraw(3);
 
                     Timer.Start();
