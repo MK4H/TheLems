@@ -20,11 +20,11 @@ namespace TheLems
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
-        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, Popredi,
+        Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, ToPictureBoxText, Popredi,
             Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen;
         Bitmap[] ObrazkyLemmu;
         Logika Hra;
-        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap;
+        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         DateTime Cas; //FORTESTING
@@ -44,10 +44,11 @@ namespace TheLems
         {
             Cas = DateTime.Now; //FORTESTING
 
-            if (Hra.TheEnd() != 0)
+            if (Hra.TheEnd() == 0)
             {
                 DrawInfoTransfer DrawInfo = Hra.Tick();
                 ImpactDraw(DrawInfo);
+                TextDraw();
                 MapDraw(DrawInfo);
                 GameDraw(DrawInfo);
             }
@@ -196,6 +197,18 @@ namespace TheLems
             }
         }
 
+        private void PictureBoxMap_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                int PoziceVRealuX = Convert.ToInt32(Math.Ceiling((e.Location.X - 5) / PomerX)) - (ZobrazenaCast.Width / 2);
+                                    //prevedeni do realnych souradnic a nasledne posunuti, aby mys byla stred
+                int PoziceVRealuY = Convert.ToInt32(Math.Ceiling((e.Location.Y - 5) / PomerY)) - (ZobrazenaCast.Height / 2);
+
+                MoveZobrazenyRect(PoziceVRealuX - ZobrazenaCast.X, PoziceVRealuY - ZobrazenaCast.Y);
+            }
+        }
+
         private void PictureBoxButtons_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             int KliknutyPole = 0;
@@ -282,23 +295,29 @@ namespace TheLems
                     PictureBoxButtons.Show();
                     PictureBoxText.Show();
                     PictureBoxMap.Show();
-
+                    //PictureBoxGame inic
                     ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
                     GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
                     PictureBoxGame.Image = ToPictureBoxGame;
-
+                        //PoprediInic
                     Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
                     GrafikaGameLandscape = Graphics.FromImage(Popredi);
                     GrafikaGameLandscape.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
 
                     Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
+
+                    //Buttons inic
                     TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
                     TlacitkaDown = new Bitmap(@"Animations\TlacitkaDown.png");
                     ToPictureBoxButtons = new Bitmap(TlacitkaUp.Width, TlacitkaUp.Height);
                     PictureBoxButtons.Image = ToPictureBoxButtons;
                     GrafikaButtons = Graphics.FromImage(ToPictureBoxButtons);
+                    //Text inic
+                    ToPictureBoxText = new Bitmap(PictureBoxText.Width, PictureBoxText.Height);
+                    GrafikaText = Graphics.FromImage(ToPictureBoxText);
+                    PictureBoxText.Image = ToPictureBoxText;
 
-
+                    //Map inic
                     ToPictureBoxMap = new Bitmap(PictureBoxMap.Width, PictureBoxMap.Height);
                     PictureBoxMap.Image = ToPictureBoxMap;
                     GrafikaMap = Graphics.FromImage(ToPictureBoxMap);
@@ -306,7 +325,7 @@ namespace TheLems
                     Graphics.FromImage(PozadiMini).DrawImage(Pozadi, 0, 0, PictureBoxMap.Width - 10, PictureBoxMap.Height - 10);
                     PomerX = (ToPictureBoxMap.Width - 10) / (double) Popredi.Width; //-10 kvuli cernymu okraji
                     PomerY = (ToPictureBoxMap.Height - 10) / (double) Popredi.Height;
-
+                    //Lemmings load
                     Bitmap TempBMP;
                     TempBMP = new Bitmap(@"Animations\ZidiTest.png");
                     ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
@@ -319,7 +338,7 @@ namespace TheLems
                     ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
 
                     this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
-
+                    //Game inic
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
                     Hra.Selected = 1;
                     ButtonClickDraw(3);
@@ -478,7 +497,23 @@ namespace TheLems
 
         private void TextDraw()
         {
+            Point PoziceMysiMapa = PoziceMysiObrazovka;
+            PoziceMysiMapa.Offset(ZobrazenaCast.X, ZobrazenaCast.Y);
+            int PocetVKurzoru;
+            string Print;
 
+            GrafikaText.Clear(Color.Black);
+            GrafikaText.DrawString(Hra.TypAPocetLemminguVKurzoru(PoziceMysiMapa, out PocetVKurzoru), new Font("Verdana", 20),
+                Brushes.White, 10, 10);
+            GrafikaText.DrawString(PocetVKurzoru.ToString(), new Font("Verdana", 20), Brushes.White, 120, 10);
+
+            Print = "Out " + Hra.AktualniPocetZivichLemmingu.ToString();
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 200, 10);
+
+            Print = "In " + Hra.PocetVCili
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 200, 10);
+
+            PictureBoxText.Refresh();
         }
 
         private void ButtonNumbersDraw()
@@ -511,9 +546,17 @@ namespace TheLems
         {
             if ((ZobrazenaCast.Right + x <= Pozadi.Width) && (ZobrazenaCast.Left + x >= 0))
                 ZobrazenaCast.X += x;
+            else if (ZobrazenaCast.Right + x <= Pozadi.Width)
+                ZobrazenaCast.X = 0;
+            else
+                ZobrazenaCast.X = Pozadi.Width - ZobrazenaCast.Width;
 
             if ((ZobrazenaCast.Bottom + y <= Pozadi.Height) && (ZobrazenaCast.Top + y >= 0))
                 ZobrazenaCast.Y += y;
+            else if (ZobrazenaCast.Bottom + y <= Pozadi.Height)
+                ZobrazenaCast.Y = 0;
+            else
+                ZobrazenaCast.Y = Pozadi.Height - ZobrazenaCast.Height;
         }
     }
 
@@ -1246,7 +1289,12 @@ namespace TheLems
         int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
         int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
         int AktPocetBlockeru;
-        int PocetVCili;
+        int _PocetVCili;
+        public int PocetVCili
+        {
+            get { return _PocetVCili; }
+            private set { _PocetVCili = value; }
+        }
         int HraniceProVitezstvi;
 
         public DrawInfoTransfer Tick()
@@ -1418,7 +1466,7 @@ namespace TheLems
                 }  
             }
 
-            Pocet = TempInt - 1;
+            Pocet = TempInt;
             VKurzoru[TempInt] = -1; //Zarazka
 
             //Presunuti minimalni vzdalenosti na pozici 0
