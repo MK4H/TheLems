@@ -340,7 +340,7 @@ namespace TheLems
                     this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
                     //Game inic
                     Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
-                    Hra.Selected = 1;
+                    Hra.Selected = 0;
                     ButtonClickDraw(3);
 
                     Timer.Start();
@@ -508,10 +508,13 @@ namespace TheLems
             GrafikaText.DrawString(PocetVKurzoru.ToString(), new Font("Verdana", 20), Brushes.White, 120, 10);
 
             Print = "Out " + Hra.AktualniPocetZivichLemmingu.ToString();
-            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 200, 10);
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 220, 10);
 
-            Print = "In " + Hra.PocetVCili
-            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 200, 10);
+            Print = "In " + Hra.ProcentVCili() + "%";
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 400, 10);
+
+            Print = "Time " + Cas.ToString("m:ss"); //TODO Predelat na odcitani po ticku
+            GrafikaText.DrawString(Print, new Font("Verdana", 20), Brushes.White, 650, 10);
 
             PictureBoxText.Refresh();
         }
@@ -1289,12 +1292,7 @@ namespace TheLems
         int AktRychlostSpawnu, MaxRychlostSpawnu, MinRychlostSpawnu;
         int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
         int AktPocetBlockeru;
-        int _PocetVCili;
-        public int PocetVCili
-        {
-            get { return _PocetVCili; }
-            private set { _PocetVCili = value; }
-        }
+        int PocetVCili;
         int HraniceProVitezstvi;
 
         public DrawInfoTransfer Tick()
@@ -1606,6 +1604,11 @@ namespace TheLems
             {
                 Spawny[i].ZmenaRychlosti(AktRychlostSpawnu);
             }
+        }
+
+        public int ProcentVCili()
+        {
+            return Convert.ToInt32(Math.Round(PocetVCili * 100 / (double)Lemmingove.Length));
         }
 
         public int TheEnd()//Jestli uz jsou vsichni naspawnovani a mrtvi
