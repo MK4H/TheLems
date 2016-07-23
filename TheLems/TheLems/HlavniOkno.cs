@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Xml;
 
 namespace TheLems
 {
@@ -463,7 +464,7 @@ namespace TheLems
             ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
             MapMouseDown = false;
             //Game inic
-            Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
+            Hra = new Logika(Popredi,cesta + "_info.xml"); //Bude vetsinu nacitat ze souboru pro danou mapu
         }
 
         private void SwitchToGame()
@@ -745,10 +746,7 @@ namespace TheLems
             else
                 ZobrazenaCast.Y = Pozadi.Height - ZobrazenaCast.Height;
         }
-    }
-
-
-    
+    } 
 
     class DrawInfoTransfer
     {
@@ -833,6 +831,59 @@ namespace TheLems
         }
     }
 
+    class LevelDetails
+    {
+        public readonly int PocetLemmingu;
+        public readonly int HraniceProVitezstvi;
+        public readonly int MaxRychlostSpawnu;
+        public readonly int MinRychlostSpawnu;
+        public readonly int AktRychlostSpawnu;
+        public readonly int[] ZbyvajiciItemy;
+        public readonly int PocetSpawnu;
+        public readonly Point[] PoziceSpawnu;
+        public readonly int[] MaxRychlostDanehoSpawnu;
+        public readonly int PocetCilu;
+        public readonly Rectangle[] Cile;
+        
+
+        public LevelDetails(string CestaKXml)
+        {
+            XmlDocument Input = new XmlDocument();
+            Input.Load(CestaKXml);
+            string Text = Input.Name;
+            PocetLemmingu = Convert.ToInt32(Input.SelectSingleNode("/Level/PocetLemmingu").InnerText);
+            HraniceProVitezstvi = Convert.ToInt32(Input.SelectSingleNode("/Level/HraniceProcentProVitezstvi").InnerText);
+            MaxRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/MaxRychlostSpawnu").InnerText);
+            MinRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/MinRychlostSpawnu").InnerText);
+            AktRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/PocatecniRychlostSpawnu").InnerText);
+            ZbyvajiciItemy = new int[8];
+            ZbyvajiciItemy[0] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Climber").InnerText);
+            ZbyvajiciItemy[1] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Floater").InnerText);
+            ZbyvajiciItemy[2] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Detonate").InnerText);
+            ZbyvajiciItemy[3] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Blocker").InnerText);
+            ZbyvajiciItemy[4] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Builder").InnerText);
+            ZbyvajiciItemy[5] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Basher").InnerText);
+            ZbyvajiciItemy[6] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Miner").InnerText);
+            ZbyvajiciItemy[7] = Convert.ToInt32(Input.SelectSingleNode("/Level/Itemy/Digger").InnerText);
+            XmlNodeList Spawny = Input.SelectSingleNode("/Level/Spawny").ChildNodes;
+            PocetSpawnu = Spawny.Count;
+            PoziceSpawnu = new Point[PocetSpawnu];
+            MaxRychlostDanehoSpawnu = new int[PocetSpawnu];
+            for (int i = 0; i < Spawny.Count; i++)
+            {
+                PoziceSpawnu[i] = new Point(Convert.ToInt32(Spawny[i].SelectSingleNode("PoziceX").InnerText), Convert.ToInt32(Spawny[i].SelectSingleNode("PoziceY").InnerText));
+                MaxRychlostDanehoSpawnu[i] = Convert.ToInt32(Spawny[i].SelectSingleNode("MaxRychlost").InnerText);
+            }
+            XmlNodeList XMLCile = Input.SelectSingleNode("/Level/Cile").ChildNodes;
+            PocetCilu = XMLCile.Count;
+            Cile = new Rectangle[PocetCilu];
+            for (int i = 0; i < XMLCile.Count; i++)
+            {
+                Cile[i] = new Rectangle(Convert.ToInt32(XMLCile[i].SelectSingleNode("PoziceX").InnerText), Convert.ToInt32(XMLCile[i].SelectSingleNode("PoziceY").InnerText),
+                                        Convert.ToInt32(XMLCile[i].SelectSingleNode("VelikostX").InnerText), Convert.ToInt32(XMLCile[i].SelectSingleNode("VelikostY").InnerText));
+            }
+        }
+    }
 
     static class Konstanty
     {
@@ -1817,44 +1868,38 @@ namespace TheLems
                 return 0;
         }
 
-        public Logika(Bitmap Popredi) //Bude vetsinu nacitat ze souboru pro mapu
+        public Logika(Bitmap Popredi, string CestaKXml) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            Lemmingove = new Lemming[100];
-            Selected = 0;
-            AktualniPocetZivichLemmingu = 0;
-            PocetSpawnutych = 0;
-            MaxRychlostSpawnu = 100;
-            MinRychlostSpawnu = 20;
-            AktRychlostSpawnu = 100;
+            LevelDetails LevelInfo = new LevelDetails(CestaKXml);
+
+            Lemmingove = new Lemming[LevelInfo.PocetLemmingu];
+            HraniceProVitezstvi = LevelInfo.HraniceProVitezstvi;      
+            MaxRychlostSpawnu = LevelInfo.MaxRychlostSpawnu;
+            MinRychlostSpawnu = LevelInfo.MinRychlostSpawnu;
+            AktRychlostSpawnu = LevelInfo.AktRychlostSpawnu;
             ZbyvajiciItemy = new int[8];
+            ZbyvajiciItemy = (int[]) LevelInfo.ZbyvajiciItemy.Clone();
+
+            Spawny = new Spawn[LevelInfo.PocetSpawnu];
+            for (int i = 0; i < LevelInfo.PocetSpawnu; i++)
+            {
+                Spawny[i] = new Spawn(LevelInfo.MaxRychlostDanehoSpawnu[i], LevelInfo.PoziceSpawnu[i]);
+            }
+
+            Cile = new Rectangle[LevelInfo.PocetCilu];
+            Cile = (Rectangle[]) LevelInfo.Cile.Clone();
+
             BOOOOM = -1;
             BOOOOMTimer = 5 * 1000 / Konstanty.Rychlosthry; //chci aby to bylo 5 sekund
             AktPocetBlockeru = 0;
             PocetVCili = 0;
+            Selected = 0;
+            AktualniPocetZivichLemmingu = 0;
+            PocetSpawnutych = 0;
             
-            //FORTESTING
-            for (int i = 0; i < ZbyvajiciItemy.Length; i++)
-            {
-                ZbyvajiciItemy[i] = 50;
-            }
-
             Blockerz = new Blocker[Math.Min(Lemmingove.Length, ZbyvajiciItemy[3])];
-
-
-            //FORTESTING
-            Spawny = new Spawn[2];
-            Spawny[0] = new Spawn(30, new Point(400, 600));
-            Spawny[1] = new Spawn(25, new Point(200, 600));
-
-            Cile = new Rectangle[1];
-            Cile[0] = new Rectangle(1400, 625, 50, 50);
-
-            HraniceProVitezstvi = 90;
         }
-
-
-
 
     }
 }

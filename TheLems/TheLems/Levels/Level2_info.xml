@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<Level>
+	<PocetLemmingu>100</PocetLemmingu>
+	<HraniceProcentProVitezstvi>90</HraniceProcentProVitezstvi>
+	
+	<MaxRychlostSpawnu>100</MaxRychlostSpawnu>
+	<MinRychlostSpawnu>20</MinRychlostSpawnu>
+	<PocatecniRychlostSpawnu>100</PocatecniRychlostSpawnu>
+	<Itemy>
+		<Climber>50</Climber>
+		<Floater>49</Floater>
+		<Detonate>48</Detonate>
+		<Blocker>47</Blocker>
+		<Builder>46</Builder>
+		<Basher>45</Basher>
+		<Miner>44</Miner>
+		<Digger>43</Digger>
+	</Itemy>
+	
+	<Spawny>
+		<Spawn>
+			<PoziceX>400</PoziceX>
+			<PoziceY>600</PoziceY>
+			<MaxRychlost>30</MaxRychlost>
+		</Spawn>
+		<Spawn>
+			<PoziceX>200</PoziceX>
+			<PoziceY>600</PoziceY>
+			<MaxRychlost>25</MaxRychlost>
+		</Spawn>
+	</Spawny>
+	
+	<Cile>
+		<Cil>
+			<PoziceX>1400</PoziceX>
+			<PoziceY>625</PoziceY>
+			<VelikostX>50</VelikostX>
+			<VelikostY>50</VelikostY>
+		</Cil>
+	</Cile>
+		
+</Level>
