@@ -26,12 +26,15 @@ namespace TheLems
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
+        bool MapMouseDown;
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
 
         public HlavniOkno()
         {
             InitializeComponent();
+
+            Stav = State.First;
 
             InitializeState();
         }
@@ -70,47 +73,50 @@ namespace TheLems
 
         private void HlavniOkno_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Shift)
-                OKolik = 1;
-            else
-                OKolik = 5;
-
-            switch (e.KeyCode)
+            if (Stav == State.Hra)
             {
-                case Keys.D1:
-                    Hra.Selected = 0;
-                    ButtonClickDraw(3);
-                    break;
-                case Keys.D2:
-                    Hra.Selected = 1;
-                    ButtonClickDraw(4);
-                    break;
-                case Keys.D3:
-                    Hra.Selected = 2;
-                    ButtonClickDraw(5);
-                    break;
-                case Keys.D4:
-                    Hra.Selected = 3;
-                    ButtonClickDraw(6);
-                    break;
-                case Keys.D5:
-                    Hra.Selected = 4;
-                    ButtonClickDraw(7);
-                    break;
-                case Keys.D6:
-                    Hra.Selected = 5;
-                    ButtonClickDraw(8);
-                    break;
-                case Keys.D7:
-                    Hra.Selected = 6;
-                    ButtonClickDraw(9);
-                    break;
-                case Keys.D8:
-                    Hra.Selected = 7;
-                    ButtonClickDraw(8);
-                    break;
-                case Keys.Escape:
-                    break;
+                if (e.Shift)
+                    OKolik = 1;
+                else
+                    OKolik = 5;
+
+                switch (e.KeyCode)
+                {
+                    case Keys.D1:
+                        Hra.Selected = 0;
+                        ButtonClickDraw(3);
+                        break;
+                    case Keys.D2:
+                        Hra.Selected = 1;
+                        ButtonClickDraw(4);
+                        break;
+                    case Keys.D3:
+                        Hra.Selected = 2;
+                        ButtonClickDraw(5);
+                        break;
+                    case Keys.D4:
+                        Hra.Selected = 3;
+                        ButtonClickDraw(6);
+                        break;
+                    case Keys.D5:
+                        Hra.Selected = 4;
+                        ButtonClickDraw(7);
+                        break;
+                    case Keys.D6:
+                        Hra.Selected = 5;
+                        ButtonClickDraw(8);
+                        break;
+                    case Keys.D7:
+                        Hra.Selected = 6;
+                        ButtonClickDraw(9);
+                        break;
+                    case Keys.D8:
+                        Hra.Selected = 7;
+                        ButtonClickDraw(10);
+                        break;
+                    case Keys.Escape:
+                        break;
+                }
             }
 
 
@@ -118,41 +124,82 @@ namespace TheLems
 
         private void HlavniOkno_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Shift)
-                OKolik = 5;
-            else
-                OKolik = 1;
+            if (Stav == State.Hra)
+            {
+                if (e.Shift)
+                    OKolik = 5;
+                else
+                    OKolik = 1;
+            }
         }
 
         private void HlavniOkno_KeyPress(object sender, KeyPressEventArgs e)
         {
-            switch (e.KeyChar)
+            if (Stav == State.Hra)
             {
-                case 'w':
-                    MoveZobrazenyRect(0, -OKolik);
-                    break;
-                case 'W':
-                    MoveZobrazenyRect(0, -OKolik);
-                    break;
-                case 's':
-                    MoveZobrazenyRect(0, OKolik);
-                    break;
-                case 'S':
-                    MoveZobrazenyRect(0, OKolik);
-                    break;
-                case 'a':
-                    MoveZobrazenyRect(-OKolik, 0);
-                    break;
-                case 'A':
-                    MoveZobrazenyRect(-OKolik, 0);
-                    break;
-                case 'd':
-                    MoveZobrazenyRect(OKolik, 0);
-                    break;
-                case 'D':
-                    MoveZobrazenyRect(OKolik, 0);
-                    break;
+                switch (e.KeyChar)
+                {
+                    case 'w':
+                        MoveZobrazenyRect(0, -OKolik);
+                        break;
+                    case 'W':
+                        MoveZobrazenyRect(0, -OKolik);
+                        break;
+                    case 's':
+                        MoveZobrazenyRect(0, OKolik);
+                        break;
+                    case 'S':
+                        MoveZobrazenyRect(0, OKolik);
+                        break;
+                    case 'a':
+                        MoveZobrazenyRect(-OKolik, 0);
+                        break;
+                    case 'A':
+                        MoveZobrazenyRect(-OKolik, 0);
+                        break;
+                    case 'd':
+                        MoveZobrazenyRect(OKolik, 0);
+                        break;
+                    case 'D':
+                        MoveZobrazenyRect(OKolik, 0);
+                        break;
+                }
             }
+        }
+
+        private void PictureBoxMap_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                MapMouseDown = true;
+                int PoziceVRealuX = Convert.ToInt32(Math.Ceiling((e.Location.X - 5) / PomerX)) - (ZobrazenaCast.Width / 2);
+                //prevedeni do realnych souradnic a nasledne posunuti, aby mys byla stred
+                int PoziceVRealuY = Convert.ToInt32(Math.Ceiling((e.Location.Y - 5) / PomerY)) - (ZobrazenaCast.Height / 2);
+
+                MoveZobrazenyRect(PoziceVRealuX - ZobrazenaCast.X, PoziceVRealuY - ZobrazenaCast.Y);
+            }
+        }
+
+        private void PictureBoxMap_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (MapMouseDown)
+            {
+                int PoziceVRealuX = Convert.ToInt32(Math.Ceiling((e.Location.X - 5) / PomerX)) - (ZobrazenaCast.Width / 2);
+                //prevedeni do realnych souradnic a nasledne posunuti, aby mys byla stred
+                int PoziceVRealuY = Convert.ToInt32(Math.Ceiling((e.Location.Y - 5) / PomerY)) - (ZobrazenaCast.Height / 2);
+
+                MoveZobrazenyRect(PoziceVRealuX - ZobrazenaCast.X, PoziceVRealuY - ZobrazenaCast.Y);
+            }
+        }
+
+        private void PictureBoxMap_MouseUp(object sender, MouseEventArgs e)
+        {
+            MapMouseDown = false;
+        }
+
+        private void PictureBoxMap_MouseLeave(object sender, EventArgs e)
+        {
+            MapMouseDown = false;
         }
 
         private void PictureBoxButtons_MouseUp(object sender, MouseEventArgs e)
@@ -192,18 +239,6 @@ namespace TheLems
                         break;
                 }
 
-            }
-        }
-
-        private void PictureBoxMap_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                int PoziceVRealuX = Convert.ToInt32(Math.Ceiling((e.Location.X - 5) / PomerX)) - (ZobrazenaCast.Width / 2);
-                                    //prevedeni do realnych souradnic a nasledne posunuti, aby mys byla stred
-                int PoziceVRealuY = Convert.ToInt32(Math.Ceiling((e.Location.Y - 5) / PomerY)) - (ZobrazenaCast.Height / 2);
-
-                MoveZobrazenyRect(PoziceVRealuX - ZobrazenaCast.X, PoziceVRealuY - ZobrazenaCast.Y);
             }
         }
 
@@ -296,8 +331,6 @@ namespace TheLems
 
             this.ClientSize = new Size(PictureBoxMenu.Width, PictureBoxMenu.Height);
 
-            Stav = State.First;
-
             SwitchToMenu();
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
@@ -331,7 +364,7 @@ namespace TheLems
             PictureBoxMenu.Show();  
         }
 
-        private void SwitchToBegin(string Level)             //LOAD EVERITHING
+        private void SwitchToBegin(string Level)//LOAD EVERITHING
         {
             string cesta = "Levels\\Level" + Level;
             switch (Stav)
@@ -380,7 +413,7 @@ namespace TheLems
             PomerY = (ToPictureBoxMap.Height - 10) / (double)Popredi.Height;
             //Lemmings load
             Bitmap TempBMP;
-            TempBMP = new Bitmap(@"Animations\ZidiTest.png");
+            TempBMP = new Bitmap(@"Animations\Lemmings.png");
             ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
             ObrazkyLemmuRot = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
             for (int i = 0; i < ObrazkyLemmu.Length; i++)
@@ -392,14 +425,13 @@ namespace TheLems
             }
 
             ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
+            MapMouseDown = false;
             //Game inic
             Hra = new Logika(Popredi); //Bude vetsinu nacitat ze souboru pro danou mapu
         }
 
         private void SwitchToGame()
         {
-            
-
             switch (Stav)
             {
                 case State.Begin:               
@@ -423,11 +455,25 @@ namespace TheLems
                     break;
 
             }
+
+            Stav = State.Hra;
         }
 
         private void SwitchToEnd(int Konec)
         {
 
+        }
+
+        private void SwitchToPause()
+        {
+            Stav = State.Pauza;
+            Timer.Stop();
+            PictureBoxGame.Enabled = false;
+            PictureBoxMap.Enabled = false;
+            PictureBoxButtons.Enabled = false;
+
+            //PictureBoxMap.Size = 
+            PictureBoxMap.Show();
         }
 
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika

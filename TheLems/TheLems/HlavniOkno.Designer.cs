@@ -81,7 +81,10 @@
             this.PictureBoxMap.Size = new System.Drawing.Size(414, 449);
             this.PictureBoxMap.TabIndex = 3;
             this.PictureBoxMap.TabStop = false;
-            this.PictureBoxMap.MouseClick += new System.Windows.Forms.MouseEventHandler(this.PictureBoxMap_MouseClick);
+            this.PictureBoxMap.MouseDown += new System.Windows.Forms.MouseEventHandler(this.PictureBoxMap_MouseDown);
+            this.PictureBoxMap.MouseLeave += new System.EventHandler(this.PictureBoxMap_MouseLeave);
+            this.PictureBoxMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PictureBoxMap_MouseMove);
+            this.PictureBoxMap.MouseUp += new System.Windows.Forms.MouseEventHandler(this.PictureBoxMap_MouseUp);
             // 
             // PictureBoxMenu
             // 
