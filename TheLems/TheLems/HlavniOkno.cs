@@ -33,8 +33,6 @@ namespace TheLems
         {
             InitializeComponent();
 
-            Stav = State.First;
-
             InitializeState();
         }
 
@@ -298,6 +296,8 @@ namespace TheLems
 
             this.ClientSize = new Size(PictureBoxMenu.Width, PictureBoxMenu.Height);
 
+            Stav = State.First;
+
             SwitchToMenu();
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
@@ -310,7 +310,6 @@ namespace TheLems
                 case State.Pauza:
                     break;
                 case State.End:
-                    
                     break;
                 case State.First:
                     PictureBoxGame.Hide();
@@ -332,7 +331,7 @@ namespace TheLems
             PictureBoxMenu.Show();  
         }
 
-        private void SwitchToBegin(string Level) //LOAD EVERITHING
+        private void SwitchToBegin(string Level)             //LOAD EVERITHING
         {
             string cesta = "Levels\\Level" + Level;
             switch (Stav)
@@ -343,7 +342,6 @@ namespace TheLems
                     
                     break;
                 case State.End:
-                    InitializeState();
                     break;
             }
 
@@ -382,7 +380,7 @@ namespace TheLems
             PomerY = (ToPictureBoxMap.Height - 10) / (double)Popredi.Height;
             //Lemmings load
             Bitmap TempBMP;
-            TempBMP = new Bitmap(@"Animations\Lemmings.png");
+            TempBMP = new Bitmap(@"Animations\ZidiTest.png");
             ObrazkyLemmu = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
             ObrazkyLemmuRot = new Bitmap[TempBMP.Height / Konstanty.velikostLemaY];
             for (int i = 0; i < ObrazkyLemmu.Length; i++)
@@ -400,6 +398,8 @@ namespace TheLems
 
         private void SwitchToGame()
         {
+            
+
             switch (Stav)
             {
                 case State.Begin:               
@@ -410,6 +410,7 @@ namespace TheLems
                     PictureBoxButtons.Show();
                     PictureBoxText.Show();
                     PictureBoxMap.Show();
+                    
 
                     this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
                     
@@ -427,18 +428,6 @@ namespace TheLems
         private void SwitchToEnd(int Konec)
         {
 
-        }
-
-        private void SwitchToPause()
-        {
-            Stav = State.Pauza;
-            Timer.Stop();
-            PictureBoxGame.Enabled = false;
-            PictureBoxMap.Enabled = false;
-            PictureBoxButtons.Enabled = false;
-
-            //PictureBoxMap.Size = 
-            PictureBoxMap.Show();
         }
 
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
