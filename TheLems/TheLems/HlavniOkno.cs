@@ -20,7 +20,7 @@ namespace TheLems
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
         Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, ToPictureBoxText, Popredi,
-            Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen;
+            Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen, PauzaScreen;
         Bitmap[] ObrazkyLemmu, ObrazkyLemmuRot;
         Logika Hra;
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText;
@@ -230,6 +230,7 @@ namespace TheLems
                         ButtonNumbersDraw();
                         break;
                     case 11:
+                        SwitchToPause();
                         break;
                     case 12:
                         break;
@@ -295,8 +296,34 @@ namespace TheLems
                             break;
                         }
                     }
-                else
+                else if (Stav == State.Begin)
                     SwitchToGame();
+                else if (Stav == State.Pauza)
+                    for (int i = 0; i < 5; i++)
+                    {
+                        if (MenuTlacitka[i].Contains(e.Location))
+                        {
+                            switch (i)
+                            {
+                                case 0://Navrat do hry
+                                    SwitchToGame();
+                                    break;
+                                case 1://Restart
+                                    break;
+                                case 2://Levels
+                                    break;
+                                case 3://Menu
+                                    SwitchToMenu();
+                                    break;
+                                case 4://Exit
+                                    Application.Exit();
+                                    break;
+                            }
+                            break;
+                        }
+                    }
+
+
             }
         }
         
@@ -341,6 +368,11 @@ namespace TheLems
             switch (Stav)
             {
                 case State.Pauza:
+                    Timer.Enabled = false;
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();
                     break;
                 case State.End:
                     break;
@@ -353,7 +385,7 @@ namespace TheLems
                 default:
                     break;
             }
-            Stav = State.Menu;
+            Stav = State.Menu; 
             MenuTlacitka = new Rectangle[5];
             MenuTlacitka[0] = new Rectangle(208, 299, 150, 100);
             MenuTlacitka[1] = new Rectangle(564, 299, 150, 100);
@@ -361,6 +393,9 @@ namespace TheLems
             MenuTlacitka[3] = new Rectangle(386, 559, 150, 100);
             MenuTlacitka[4] = new Rectangle(742, 599, 150, 100);
             PictureBoxMenu.Image = new Bitmap(@"Animations\Menu.png");
+            PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
+            PictureBoxMenu.Left = 0;
+            PictureBoxMenu.Top = 0;
             PictureBoxMenu.Show();  
         }
 
@@ -423,6 +458,7 @@ namespace TheLems
                 ObrazkyLemmuRot[i] = (Bitmap)ObrazkyLemmu[i].Clone();
                 ObrazkyLemmuRot[i].RotateFlip(RotateFlipType.RotateNoneFlipX);
             }
+            PauzaScreen = new Bitmap(@"Animations\Pauza.png");
 
             ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
             MapMouseDown = false;
@@ -442,7 +478,11 @@ namespace TheLems
                     PictureBoxButtons.Show();
                     PictureBoxText.Show();
                     PictureBoxMap.Show();
-                    
+
+                    PictureBoxGame.Enabled = true;
+                    PictureBoxMap.Enabled = true;
+                    PictureBoxButtons.Enabled = true;
+                    Timer.Enabled = true;
 
                     this.ClientSize = new Size(PictureBoxGame.Width, PictureBoxGame.Height + PictureBoxText.Height + PictureBoxButtons.Height);
                     
@@ -452,6 +492,14 @@ namespace TheLems
                     break;
 
                 case State.Pauza:
+                    PictureBoxMenu.Hide();
+                    PictureBoxMenu.Image = null;
+
+                    PictureBoxGame.Enabled = true;
+                    PictureBoxMap.Enabled = true;
+                    PictureBoxButtons.Enabled = true;
+
+                    Timer.Start();
                     break;
 
             }
@@ -461,6 +509,12 @@ namespace TheLems
 
         private void SwitchToEnd(int Konec)
         {
+            Stav = State.End;
+            Timer.Enabled = false;
+            PictureBoxGame.Hide();
+            PictureBoxButtons.Hide();
+            PictureBoxText.Hide();
+            PictureBoxMap.Hide();
 
         }
 
@@ -472,8 +526,17 @@ namespace TheLems
             PictureBoxMap.Enabled = false;
             PictureBoxButtons.Enabled = false;
 
-            //PictureBoxMap.Size = 
-            PictureBoxMap.Show();
+            PictureBoxMenu.Size = PauzaScreen.Size;
+            PictureBoxMenu.Left = 490;
+            PictureBoxMenu.Top = 134;
+            MenuTlacitka = new Rectangle[5];
+            MenuTlacitka[0] = new Rectangle(50, 32, 200, 50);
+            MenuTlacitka[1] = new Rectangle(50, 192, 200, 50);
+            MenuTlacitka[2] = new Rectangle(50, 264, 200, 50);
+            MenuTlacitka[3] = new Rectangle(50, 336, 200, 50);
+            MenuTlacitka[4] = new Rectangle(50, 408, 200, 50);
+            PictureBoxMenu.Image = PauzaScreen;
+            PictureBoxMenu.Show();
         }
 
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
