@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <Level Jmeno ="Level 2">
-	<PocetLemmingu>100</PocetLemmingu>
+	<Description></Description>
+  <PocetLemmingu>100</PocetLemmingu>
 	<HraniceProcentProVitezstvi>90</HraniceProcentProVitezstvi>
 	<CasovyLimit>300</CasovyLimit>
 	<MaxRychlostSpawnu>100</MaxRychlostSpawnu>

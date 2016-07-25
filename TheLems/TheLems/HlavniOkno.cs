@@ -29,7 +29,7 @@ namespace TheLems
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText, GrafikaMenu;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
-        bool MapMouseDown;
+        bool MapMouseDown, Win;
         string AktLevelCesta;
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
@@ -301,7 +301,22 @@ namespace TheLems
                         }
                     }
                 else if (Stav == State.Begin)
-                    SwitchToGame();
+                    for (int i = 0; i < MenuTlacitka.Length; i++)
+                    {
+                        if (MenuTlacitka[i].Contains(e.Location))
+                        {
+                            switch (i)
+                            {
+                                case 0://Menu
+                                    SwitchToMenu();
+                                    break;
+                                case 1://Start
+                                    SwitchToGame();
+                                    break;
+                            }
+                            break;
+                        }
+                    }
                 else if (Stav == State.Pauza)
                     for (int i = 0; i < MenuTlacitka.Length; i++)
                     {
@@ -339,7 +354,13 @@ namespace TheLems
                                     break;
                                 case 1://Levels
                                     break;
-                                case 2://Next
+                                case 2://Next/Restart
+                                    if (Win)
+                                    { }
+                                    else
+                                    {
+                                        SwitchToBegin(AktLevelCesta);
+                                    }
                                     break;
  
                             }
@@ -410,6 +431,20 @@ namespace TheLems
                     PictureBoxMenu.Refresh();
                     break;
                 case State.Begin:
+                    GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
+                    for (int i = 0; i < MenuTlacitka.Length; i++)
+                    {
+                        if (MenuTlacitka[i].Contains(e.Location))
+                        {
+                            Tlacitko = i;
+                            break;
+                        }
+                    }
+                    if (Tlacitko != -1)
+                    {
+                        GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
+                    }
+                    PictureBoxMenu.Refresh();
                     break;
             }
         }
@@ -474,9 +509,18 @@ namespace TheLems
                     PictureBoxText.Hide();
                     PictureBoxMap.Hide();                   
                     break;
+                case State.Begin:
+                    
+                    break;
                 default:
                     break;
             }
+            //Vynulovani vseho, protoze sem v menu
+            ToPictureBoxGame = null; ToPictureBoxMap = null; ToPictureBoxText = null; ToPictureBoxButtons = null;
+            GrafikaGameDisplay = null; GrafikaGameLandscape = null; GrafikaMap = null; GrafikaText = null;
+            Popredi = null; Pozadi = null; PozadiMini = null; TlacitkaUp = null; TlacitkaDown = null; ObrazkyLemmu = null; ObrazkyLemmuRot = null;
+            PauzaScreen = null;
+
             Stav = State.Menu;
             MouseOverTlacitko = -1;
             MenuTlacitka = new Rectangle[5];
@@ -505,22 +549,68 @@ namespace TheLems
             AktLevelCesta = (string) CestaKLevelu.Clone();
             switch (Stav)
             {
-                case State.Menu:
-                    
+                case State.Menu:               
                     break;
                 case State.Pauza:
-
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();
+                    break;
                 case State.End:
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();
                     break;
             }
 
             Stav = State.Begin;
-            //PictureBoxMenu.Image = new Bitmap(cesta + "_intro.png");
+            PictureBoxMenu.Image = new Bitmap(@"Animations\Loading.png");
+            PictureBoxMenu.Left = 0;
+            PictureBoxMenu.Top = 0;
+            PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
+            GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
+            MenuTlacitka = new Rectangle[2];
+            MenuTlacitka[0] = new Rectangle(0, 668, 300, 100);
+            MenuTlacitka[1] = new Rectangle(980, 668, 300, 100);
             MouseOverTlacitko = -1;
 
             //Nacteni infa o levelu
             LevelDetails LevelInfo = new LevelDetails(CestaKLevelu + "_info.xml");
 
+            //Vypsani infa
+            GrafikaMenu.DrawString("Level: " + LevelInfo.Jmeno, new Font("Verdana", 20), Brushes.White, 50, 50);
+            GrafikaMenu.DrawString("Počet Lemmingů: " + LevelInfo.PocetLemmingu, new Font("Verdana", 20), Brushes.White, 50, 100);
+            GrafikaMenu.DrawString("Hranice pro vítězství:" + LevelInfo.HraniceProVitezstvi + "%", new Font("Verdana", 20), Brushes.White, 50, 150);
+            GrafikaMenu.DrawString("Časový limit: " + LevelInfo.CasovyLimit.Minutes + LevelInfo.CasovyLimit.Seconds, new Font("Verdana", 20), Brushes.White, 50, 200);
+            GrafikaMenu.DrawString("Počet spawnů: " + LevelInfo.PocetSpawnu, new Font("Verdana", 20), Brushes.White, 50, 250);
+            GrafikaMenu.DrawString("Počet cílů: " + LevelInfo.PocetCilu, new Font("Verdana", 20), Brushes.White, 50, 300);
+            
+            StringBuilder Formating = new StringBuilder(LevelInfo.Description);
+            Formating.Replace("\n", "");
+            Formating.Replace("\r", "");
+            string[] ZFormatovano = new string[(Formating.Length/70) + 1];
+            int Cyklus = 0, Hranice = 70;
+            while (Formating.Length > 0) //Pro rozstrihani do 70 charu dlouhejch stringu, aby se veslo na obrazovku
+            {
+                while (Formating.Length > Hranice && Formating[Hranice] != ' ')
+                {
+                    Hranice--;
+                }
+                if (Formating.Length < Hranice)
+                    Hranice = Formating.Length;
+                ZFormatovano[Cyklus] = Formating.ToString(0, Hranice);
+                Formating.Remove(0, Hranice);
+                Cyklus++;
+                Hranice = 70; 
+            }
+            GrafikaMenu.DrawString("Popis: " + ZFormatovano[0], new Font("Verdana", 20), Brushes.White, 50, 350);
+            for (int i = 1; i < ZFormatovano.Length && !string.IsNullOrWhiteSpace(ZFormatovano[i]) && i < 7; i++)
+            {
+                GrafikaMenu.DrawString(ZFormatovano[i], new Font("Verdana", 20), Brushes.White, 80, 350 + i*50);
+            }
+            
             //PictureBoxGame inic
             ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
             GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
@@ -621,22 +711,31 @@ namespace TheLems
         {
             Stav = State.End;
             Timer.Enabled = false;
-            
+
 
             if (Konec == 1)
+            {
                 PictureBoxMenu.Image = new Bitmap(@"Animations\Victory.png");
+                Win = true;
+            }
             else
+            {
                 PictureBoxMenu.Image = new Bitmap(@"AnimationS\Defeat.png");
+                Win = false;
+            }
 
             PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
-            PictureBoxMenu.Left = 290;
-            PictureBoxMenu.Top = 134;
+            PictureBoxMenu.Left = 285;
+            PictureBoxMenu.Top = 129;
             GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
             MenuTlacitka = new Rectangle[3];
-            MenuTlacitka[0] = new Rectangle(0, 450, 150, 50);
-            MenuTlacitka[1] = new Rectangle(275, 450, 150, 50);
-            MenuTlacitka[2] = new Rectangle(550, 450, 150, 50);
+            MenuTlacitka[0] = new Rectangle(7, 454, 150, 50);
+            MenuTlacitka[1] = new Rectangle(280, 454, 150, 50);
+            MenuTlacitka[2] = new Rectangle(553, 454, 150, 50);
 
+            GrafikaMenu.DrawString("Zachráněných: " + Hra.ProcentVCili() + "%", new Font("Verdana", 20), Brushes.White, 50, 150);
+            GrafikaMenu.DrawString("Potřebných pro splnění: " + Hra.HraniceProVitezstvi + "%", new Font("Verdana", 20), Brushes.White, 50, 200);
+            GrafikaMenu.DrawString("Zbývající čas: " + Hra.Limit.Minutes + ":" + Hra.Limit.Seconds, new Font("Verdana", 20), Brushes.White, 50, 250);
             PictureBoxMenu.Show();   
         }
 
@@ -957,9 +1056,10 @@ namespace TheLems
     class LevelDetails
     {
         public readonly string Jmeno;
+        public readonly string Description;
         public readonly int PocetLemmingu;
         public readonly int HraniceProVitezstvi;
-        public readonly int CasovyLimit;
+        public readonly TimeSpan CasovyLimit;
         public readonly int MaxRychlostSpawnu;
         public readonly int MinRychlostSpawnu;
         public readonly int AktRychlostSpawnu;
@@ -976,9 +1076,10 @@ namespace TheLems
             XmlDocument Input = new XmlDocument();
             Input.Load(CestaKXml);
             Jmeno = Input.SelectSingleNode("/Level").Attributes["Jmeno"].Value;
+            Description = Input.SelectSingleNode("/Level/Description").InnerText;
             PocetLemmingu = Convert.ToInt32(Input.SelectSingleNode("/Level/PocetLemmingu").InnerText);
             HraniceProVitezstvi = Convert.ToInt32(Input.SelectSingleNode("/Level/HraniceProcentProVitezstvi").InnerText);
-            CasovyLimit = Convert.ToInt32(Input.SelectSingleNode("/Level/CasovyLimit").InnerText);
+            CasovyLimit = new TimeSpan(0,0,0,Convert.ToInt32(Input.SelectSingleNode("/Level/CasovyLimit").InnerText),0);
             MaxRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/MaxRychlostSpawnu").InnerText);
             MinRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/MinRychlostSpawnu").InnerText);
             AktRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/PocatecniRychlostSpawnu").InnerText);
@@ -1660,7 +1761,12 @@ namespace TheLems
         int BOOOOM,BOOOOMTimer; //Pro GlobalBOOM
         int AktPocetBlockeru;
         int PocetVCili;
-        int HraniceProVitezstvi;
+        int _HraniceProVitezstvi;
+        public int HraniceProVitezstvi
+        {
+            get { return _HraniceProVitezstvi; }
+            private set { _HraniceProVitezstvi = value; }
+        }
         TimeSpan _Limit;
         public TimeSpan Limit
         {
@@ -2013,7 +2119,7 @@ namespace TheLems
 
             Lemmingove = new Lemming[LevelInfo.PocetLemmingu];
             HraniceProVitezstvi = LevelInfo.HraniceProVitezstvi;
-            Limit = new TimeSpan(0,0,0,LevelInfo.CasovyLimit,0);      
+            Limit = LevelInfo.CasovyLimit;      
             MaxRychlostSpawnu = LevelInfo.MaxRychlostSpawnu;
             MinRychlostSpawnu = LevelInfo.MinRychlostSpawnu;
             AktRychlostSpawnu = LevelInfo.AktRychlostSpawnu;
