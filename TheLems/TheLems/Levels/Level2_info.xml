@@ -2,7 +2,7 @@
 <Level Jmeno ="Level 2">
 	<PocetLemmingu>100</PocetLemmingu>
 	<HraniceProcentProVitezstvi>90</HraniceProcentProVitezstvi>
-	
+	<CasovyLimit>300</CasovyLimit>
 	<MaxRychlostSpawnu>100</MaxRychlostSpawnu>
 	<MinRychlostSpawnu>20</MinRychlostSpawnu>
 	<PocatecniRychlostSpawnu>100</PocatecniRychlostSpawnu>
