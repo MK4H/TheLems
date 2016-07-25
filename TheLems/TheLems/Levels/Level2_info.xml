@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<Level>
+<Level Jmeno ="Level 2">
 	<PocetLemmingu>100</PocetLemmingu>
 	<HraniceProcentProVitezstvi>90</HraniceProcentProVitezstvi>
 	

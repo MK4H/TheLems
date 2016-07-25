@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
+using System.IO;
 
 namespace TheLems
 {
@@ -20,14 +21,16 @@ namespace TheLems
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
+        int MouseOverTlacitko;
         Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, ToPictureBoxText, Popredi,
             Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen, PauzaScreen;
-        Bitmap[] ObrazkyLemmu, ObrazkyLemmuRot;
+        Bitmap[] ObrazkyLemmu, ObrazkyLemmuRot, MenuTlacitkaPics;
         Logika Hra;
-        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText;
+        Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText, GrafikaMenu;
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         bool MapMouseDown;
+        string AktLevelCesta;
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
 
@@ -282,7 +285,7 @@ namespace TheLems
                             switch (i)
                             {
                                 case 0://New Game
-                                    SwitchToBegin("2");
+                                    SwitchToBegin("Levels\\Level2");
                                     break;
                                 case 1://Levels
                                     break;
@@ -310,6 +313,7 @@ namespace TheLems
                                     SwitchToGame();
                                     break;
                                 case 1://Restart
+                                    SwitchToBegin(AktLevelCesta);
                                     break;
                                 case 2://Levels
                                     break;
@@ -325,6 +329,56 @@ namespace TheLems
                     }
 
 
+            }
+        }
+
+        private void PictureBoxMenu_MouseMove(object sender, MouseEventArgs e)
+        {
+            int Tlacitko = -1;
+            switch (Stav)
+            {
+                case State.Menu:
+                    for (int i = 0; i < MenuTlacitka.Length; i++)
+                    {
+                        if (MenuTlacitka[i].Contains(e.Location))
+                        {
+                            Tlacitko = i;
+                            break;
+                        }
+                    }
+
+                    if (Tlacitko != -1)
+                    {
+                        GrafikaMenu.DrawRectangle(new Pen(Color.FromArgb(150,Color.White),3),MenuTlacitka[Tlacitko]);
+                        MouseOverTlacitko = Tlacitko;
+                    }
+                    else if (MouseOverTlacitko != -1)//bylo nad tlacitkem, ted uz neni
+                    {
+                        GrafikaMenu.DrawImage(MenuTlacitkaPics[MouseOverTlacitko], MenuTlacitka[MouseOverTlacitko].X - 3, MenuTlacitka[MouseOverTlacitko].Y - 3);
+                        MouseOverTlacitko = -1;
+                    }
+                    PictureBoxMenu.Refresh();
+                    break;
+                case State.Pauza:
+                    GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
+                    for (int i = 0; i < MenuTlacitka.Length ; i++)
+                    {
+                        if (MenuTlacitka[i].Contains(e.Location))
+                        {
+                            Tlacitko = i;
+                            break;
+                        }
+                    }
+                    if (Tlacitko != -1)
+                    {
+                        GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
+                    }                 
+                    PictureBoxMenu.Refresh();
+                    break;
+                case State.End:
+                    break;
+                case State.Begin:
+                    break;
             }
         }
         
@@ -362,6 +416,7 @@ namespace TheLems
             SwitchToMenu();
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
+
         }
 
         private void SwitchToMenu()
@@ -386,47 +441,60 @@ namespace TheLems
                 default:
                     break;
             }
-            Stav = State.Menu; 
+            Stav = State.Menu;
+            MouseOverTlacitko = -1;
             MenuTlacitka = new Rectangle[5];
             MenuTlacitka[0] = new Rectangle(208, 299, 150, 100);
             MenuTlacitka[1] = new Rectangle(564, 299, 150, 100);
             MenuTlacitka[2] = new Rectangle(920, 299, 150, 100);
             MenuTlacitka[3] = new Rectangle(386, 559, 150, 100);
-            MenuTlacitka[4] = new Rectangle(742, 599, 150, 100);
+            MenuTlacitka[4] = new Rectangle(742, 559, 150, 100);
             PictureBoxMenu.Image = new Bitmap(@"Animations\Menu.png");
             PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
             PictureBoxMenu.Left = 0;
             PictureBoxMenu.Top = 0;
+            GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
+            MenuTlacitkaPics = new Bitmap[5];
+            for (int i = 0; i < MenuTlacitkaPics.Length; i++)
+            {
+                MenuTlacitkaPics[i] = new Bitmap(MenuTlacitka[i].Width + 6, MenuTlacitka[i].Height + 6);
+                Graphics.FromImage(MenuTlacitkaPics[i]).DrawImage(PictureBoxMenu.Image, 0, 0, 
+                    new Rectangle(MenuTlacitka[i].X - 3, MenuTlacitka[i].Y - 3, MenuTlacitka[i].Width + 6, MenuTlacitka[i].Height + 6), GraphicsUnit.Pixel);
+            }
             PictureBoxMenu.Show();  
         }
 
-        private void SwitchToBegin(string Level)//LOAD EVERITHING
+        private void SwitchToBegin(string CestaKLevelu)//LOAD EVERITHING
         {
-            string cesta = "Levels\\Level" + Level;
+            AktLevelCesta = (string) CestaKLevelu.Clone();
             switch (Stav)
             {
                 case State.Menu:
-                    MenuTlacitka = null; //uvolnit co nejvice pameti
-
                     
                     break;
+                case State.Pauza:
+
                 case State.End:
                     break;
             }
 
             Stav = State.Begin;
             //PictureBoxMenu.Image = new Bitmap(cesta + "_intro.png");
+            MouseOverTlacitko = -1;
+
+            //Nacteni infa o levelu
+            LevelDetails LevelInfo = new LevelDetails(CestaKLevelu + "_info.xml");
 
             //PictureBoxGame inic
             ToPictureBoxGame = new Bitmap(PictureBoxGame.Width, PictureBoxGame.Height);
             GrafikaGameDisplay = Graphics.FromImage(ToPictureBoxGame);
             PictureBoxGame.Image = ToPictureBoxGame;
             //PoprediInic
-            Popredi = new Bitmap(System.IO.Path.Combine(cesta + "_popredi.png"));
+            Popredi = new Bitmap(Path.Combine(CestaKLevelu + "_popredi.png"));
             GrafikaGameLandscape = Graphics.FromImage(Popredi);
             GrafikaGameLandscape.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
 
-            Pozadi = new Bitmap(System.IO.Path.Combine(cesta + "_pozadi.png"));
+            Pozadi = new Bitmap(Path.Combine(CestaKLevelu + "_pozadi.png"));
 
             //Buttons inic
             TlacitkaUp = new Bitmap(@"Animations\TlacitkaUp.png");
@@ -464,7 +532,7 @@ namespace TheLems
             ZobrazenaCast = new Rectangle(0, 0, ToPictureBoxGame.Width, ToPictureBoxGame.Height);
             MapMouseDown = false;
             //Game inic
-            Hra = new Logika(Popredi,cesta + "_info.xml"); //Bude vetsinu nacitat ze souboru pro danou mapu
+            Hra = new Logika(Popredi,LevelInfo); //Bude vetsinu nacitat ze souboru pro danou mapu
         }
 
         private void SwitchToGame()
@@ -472,8 +540,11 @@ namespace TheLems
             switch (Stav)
             {
                 case State.Begin:               
-                    PictureBoxMenu.Hide();
+                    PictureBoxMenu.Hide();//uvolnit co nejvice pameti
                     PictureBoxMenu.Image = null;
+                    MenuTlacitka = null; 
+                    GrafikaMenu = null;
+                    MenuTlacitkaPics = null;
 
                     PictureBoxGame.Show();
                     PictureBoxButtons.Show();
@@ -493,8 +564,10 @@ namespace TheLems
                     break;
 
                 case State.Pauza:
+                    GrafikaMenu = null;
                     PictureBoxMenu.Hide();
                     PictureBoxMenu.Image = null;
+                    MenuTlacitka = null;
 
                     PictureBoxGame.Enabled = true;
                     PictureBoxMap.Enabled = true;
@@ -527,6 +600,7 @@ namespace TheLems
             PictureBoxMap.Enabled = false;
             PictureBoxButtons.Enabled = false;
 
+            MouseOverTlacitko = -1;
             PictureBoxMenu.Size = PauzaScreen.Size;
             PictureBoxMenu.Left = 490;
             PictureBoxMenu.Top = 134;
@@ -537,6 +611,7 @@ namespace TheLems
             MenuTlacitka[3] = new Rectangle(50, 336, 200, 50);
             MenuTlacitka[4] = new Rectangle(50, 408, 200, 50);
             PictureBoxMenu.Image = PauzaScreen;
+            GrafikaMenu = Graphics.FromImage(PauzaScreen);
             PictureBoxMenu.Show();
         }
 
@@ -833,6 +908,7 @@ namespace TheLems
 
     class LevelDetails
     {
+        public readonly string Jmeno;
         public readonly int PocetLemmingu;
         public readonly int HraniceProVitezstvi;
         public readonly int MaxRychlostSpawnu;
@@ -847,10 +923,10 @@ namespace TheLems
         
 
         public LevelDetails(string CestaKXml)
-        {
+        { 
             XmlDocument Input = new XmlDocument();
             Input.Load(CestaKXml);
-            string Text = Input.Name;
+            Jmeno = Input.SelectSingleNode("/Level").Attributes["Jmeno"].Value;
             PocetLemmingu = Convert.ToInt32(Input.SelectSingleNode("/Level/PocetLemmingu").InnerText);
             HraniceProVitezstvi = Convert.ToInt32(Input.SelectSingleNode("/Level/HraniceProcentProVitezstvi").InnerText);
             MaxRychlostSpawnu = Convert.ToInt32(Input.SelectSingleNode("/Level/MaxRychlostSpawnu").InnerText);
@@ -881,7 +957,7 @@ namespace TheLems
             {
                 Cile[i] = new Rectangle(Convert.ToInt32(XMLCile[i].SelectSingleNode("PoziceX").InnerText), Convert.ToInt32(XMLCile[i].SelectSingleNode("PoziceY").InnerText),
                                         Convert.ToInt32(XMLCile[i].SelectSingleNode("VelikostX").InnerText), Convert.ToInt32(XMLCile[i].SelectSingleNode("VelikostY").InnerText));
-            }
+            }            
         }
     }
 
@@ -1868,10 +1944,9 @@ namespace TheLems
                 return 0;
         }
 
-        public Logika(Bitmap Popredi, string CestaKXml) //Bude vetsinu nacitat ze souboru pro mapu
+        public Logika(Bitmap Popredi, LevelDetails LevelInfo) //Bude vetsinu nacitat ze souboru pro mapu
         {
             this.Popredi = Popredi;
-            LevelDetails LevelInfo = new LevelDetails(CestaKXml);
 
             Lemmingove = new Lemming[LevelInfo.PocetLemmingu];
             HraniceProVitezstvi = LevelInfo.HraniceProVitezstvi;      
