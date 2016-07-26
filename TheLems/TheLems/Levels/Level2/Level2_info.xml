@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <Level Jmeno ="Level 2">
-	<Description></Description>
+	<Description>Paradni descripce, snad to bude fungovat, protoze jinak je to v hajzlu a uz se mi to nechce delat, a chce to este o dost delsi text, aby se to spravne zalamovalo
+  a tak, uvidime co to udela s timhle, jestli to fakt bude fachat nebo ne</Description>
   <PocetLemmingu>100</PocetLemmingu>
 	<HraniceProcentProVitezstvi>90</HraniceProcentProVitezstvi>
 	<CasovyLimit>300</CasovyLimit>

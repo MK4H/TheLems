@@ -17,7 +17,7 @@ namespace TheLems
     public partial class HlavniOkno : Form
     {
         Rectangle[] MenuTlacitka;
-        enum State { Menu, Hra, Pauza, End, Begin,First }
+        enum State { Menu, Hra, Pauza, End, Begin,First, Levels }
         State Stav;
         int OKolik = 5; //Pro eventy s klavesnici , posun
         double PomerX,PomerY;
@@ -30,7 +30,8 @@ namespace TheLems
         Point PoziceMysiObrazovka;
         Rectangle ZobrazenaCast; //Popisuje cast vyriznutou z obrazku cele mapy a zobrazenou na obrazovce
         bool MapMouseDown, Win;
-        string AktLevelCesta;
+        int AktLevelIndex, Strana;
+        string[] Levels;
         DateTime Cas; //FORTESTING
         TimeSpan UbehlyCas; //FORTESTING
 
@@ -277,97 +278,114 @@ namespace TheLems
         {
             if (e.Button == MouseButtons.Left)
             {
-                if (Stav == State.Menu)
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
+                switch (Stav)
+                {
+                    case State.Menu:
+                        for (int i = 0; i < MenuTlacitka.Length; i++)
                         {
-                            switch (i)
+                            if (MenuTlacitka[i].Contains(e.Location))
                             {
-                                case 0://New Game
-                                    SwitchToBegin("Levels\\Level2");
-                                    break;
-                                case 1://Levels
-                                    break;
-                                case 2://Ovladani
-                                    break;
-                                case 3://About
-                                    break;
-                                case 4://Exit
-                                    Application.Exit();
-                                    break;
+                                switch (i)
+                                {
+                                    case 0://New Game
+                                        SwitchToBegin(Levels[AktLevelIndex]);
+                                        break;
+                                    case 1://Levels
+                                        SwitchToLevels();
+                                        break;
+                                    case 2://Ovladani
+                                        break;
+                                    case 3://About
+                                        break;
+                                    case 4://Exit
+                                        Application.Exit();
+                                        break;
+                                }
+                                break;
                             }
-                            break;
                         }
-                    }
-                else if (Stav == State.Begin)
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            switch (i)
+                        break;
+                    case State.Begin:
+                            for (int i = 0; i < MenuTlacitka.Length; i++)
                             {
-                                case 0://Menu
-                                    SwitchToMenu();
-                                    break;
-                                case 1://Start
-                                    SwitchToGame();
-                                    break;
-                            }
-                            break;
-                        }
-                    }
-                else if (Stav == State.Pauza)
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            switch (i)
-                            {
-                                case 0://Navrat do hry
-                                    SwitchToGame();
-                                    break;
-                                case 1://Restart
-                                    SwitchToBegin(AktLevelCesta);
-                                    break;
-                                case 2://Levels
-                                    break;
-                                case 3://Menu
-                                    SwitchToMenu();
-                                    break;
-                                case 4://Exit
-                                    Application.Exit();
-                                    break;
-                            }
-                            break;
-                        }
-                    }
-                else if (Stav == State.End)
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            switch (i)
-                            {
-                                case 0://Menu
-                                    SwitchToMenu();
-                                    break;
-                                case 1://Levels
-                                    break;
-                                case 2://Next/Restart
-                                    if (Win)
-                                    { }
-                                    else
+                                if (MenuTlacitka[i].Contains(e.Location))
+                                {
+                                    switch (i)
                                     {
-                                        SwitchToBegin(AktLevelCesta);
+                                        case 0://Menu
+                                            SwitchToMenu();
+                                            break;
+                                        case 1://Start
+                                            SwitchToGame();
+                                            break;
                                     }
                                     break;
- 
+                                }
                             }
-                            break;
-                        }
-                    }
+                        break;
+                    case State.Pauza:
+                            for (int i = 0; i < MenuTlacitka.Length; i++)
+                            {
+                                if (MenuTlacitka[i].Contains(e.Location))
+                                {
+                                    switch (i)
+                                    {
+                                        case 0://Navrat do hry
+                                            SwitchToGame();
+                                            break;
+                                        case 1://Restart
+                                            SwitchToBegin(Levels[AktLevelIndex]);
+                                            break;
+                                        case 2://Levels
+                                            break;
+                                        case 3://Menu
+                                            SwitchToMenu();
+                                            break;
+                                        case 4://Exit
+                                            Application.Exit();
+                                            break;
+                                    }
+                                    break;
+                                }
+                            }
+                        break;
+                    case State.End:
+                            for (int i = 0; i < MenuTlacitka.Length; i++)
+                            {
+                                if (MenuTlacitka[i].Contains(e.Location))
+                                {
+                                    switch (i)
+                                    {
+                                        case 0://Menu
+                                            SwitchToMenu();
+                                            break;
+                                        case 1://Levels
+                                            break;
+                                        case 2://Next/Restart
+                                            if (Win)
+                                            {
+                                                AktLevelIndex++;
+                                                if (AktLevelIndex >= Levels.Length)
+                                                    AktLevelIndex = 0;
+                                                SwitchToBegin(Levels[AktLevelIndex]);
+                                            }
+                                            else
+                                            {
+                                                SwitchToBegin(Levels[AktLevelIndex]);
+                                            }
+                                            break;
 
+                                    }
+                                    break;
+                                }
+                            }
+                        break;
+                    case State.Levels://TODO
+                        break;
+
+                        
+
+                }
             }
         }
 
@@ -446,6 +464,8 @@ namespace TheLems
                     }
                     PictureBoxMenu.Refresh();
                     break;
+                case State.Levels:
+                    break;
             }
         }
         
@@ -479,10 +499,12 @@ namespace TheLems
             PictureBoxMenu.Width = 1280;
 
             this.ClientSize = new Size(PictureBoxMenu.Width, PictureBoxMenu.Height);
-
-            SwitchToMenu();
             //NASTAVENI RYCHLOSTI
             Timer.Interval = Konstanty.Rychlosthry;
+            Levels = Directory.GetDirectories("Levels");
+
+            SwitchToMenu();
+            
 
         }
 
@@ -545,8 +567,7 @@ namespace TheLems
         }
 
         private void SwitchToBegin(string CestaKLevelu)//LOAD EVERITHING
-        {
-            AktLevelCesta = (string) CestaKLevelu.Clone();
+        { 
             switch (Stav)
             {
                 case State.Menu:               
@@ -760,6 +781,59 @@ namespace TheLems
             PictureBoxMenu.Image = PauzaScreen;
             GrafikaMenu = Graphics.FromImage(PauzaScreen);
             PictureBoxMenu.Show();
+        }
+
+        private void SwitchToLevels()
+        {
+            switch (Stav)
+            {
+                case State.Menu:
+                    break;
+                case State.Pauza:
+                    Timer.Enabled = false;
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();
+                    break;
+                case State.End:
+                    Timer.Enabled = false;
+                    PictureBoxGame.Hide();
+                    PictureBoxButtons.Hide();
+                    PictureBoxText.Hide();
+                    PictureBoxMap.Hide();
+                    break;
+                    
+            }
+            ToPictureBoxGame = null; ToPictureBoxMap = null; ToPictureBoxText = null; ToPictureBoxButtons = null;
+            GrafikaGameDisplay = null; GrafikaGameLandscape = null; GrafikaMap = null; GrafikaText = null;
+            Popredi = null; Pozadi = null; PozadiMini = null; TlacitkaUp = null; TlacitkaDown = null; ObrazkyLemmu = null; ObrazkyLemmuRot = null;
+            PauzaScreen = null;
+
+            Strana = 0;
+            MouseOverTlacitko = -1;
+            MenuTlacitka = new Rectangle[12];
+            MenuTlacitka[0] = new Rectangle();
+            MenuTlacitka[1] = new Rectangle();
+            MenuTlacitka[2] = new Rectangle();
+            PictureBoxMenu.Image = new Bitmap(@"Animations\GenBackground.png");
+            PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
+            PictureBoxMenu.Left = 0;
+            PictureBoxMenu.Top = 0;
+            GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
+            //TODO VYKRESLIT MAPY
+            for (int i = 0; i < 3 && i*3 < Levels.Length; i++)
+            {
+                for (int j = 0; j < 3 && i * 3 + j < Levels.Length; j++)
+                {
+                    GrafikaMenu.DrawImage(
+                        new Bitmap(Levels[i * 3 + j] + "\\" + Levels[i * 3 + j].Substring(Levels[i * 3 + j].LastIndexOf('\\') + 1) + "_pozadi.png"), // At zije quoting a escapovani
+                        50 + j * 400, 50 + i * 250, 350, 200);
+                    GrafikaMenu.DrawImage(
+                        new Bitmap(Levels[i * 3 + j] + "\\" + Levels[i * 3 + j].Substring(Levels[i * 3 + j].LastIndexOf('\\') + 1) + "_popredi.png")
+                        , 50 + j * 400, 50 + i * 50, 350, 200);
+                }
+            }
         }
 
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika

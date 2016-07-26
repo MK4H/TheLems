@@ -1,0 +1,40 @@
+﻿<?xml version="1.0"?>
+
+<Level Name="Level1">
+  <Description>Prvni level, co jsem kdy udelal</Description>
+  <PocetLemmingu>20</PocetLemmingu>
+  <HraniceProcentProVitezstvi>50</HraniceProcentProVitezstvi>
+  <CasovyLimit>60</CasovyLimit>
+  <MaxRychlostSpawnu>90</MaxRychlostSpawnu>
+  <MinRychlostSpawnu>60</MinRychlostSpawnu>
+  <PocatecniRychlostSpawnu>75</PocatecniRychlostSpawnu>
+
+  <Itemy>
+    <Climber>10</Climber>
+    <Floater>10</Floater>
+    <Detonate>10</Detonate>
+    <Blocker>10</Blocker>
+    <Builder>10</Builder>
+    <Basher>10</Basher>
+    <Miner>10</Miner>
+    <Digger>10</Digger>
+  </Itemy>
+
+  <Spawny>
+    <Spawn>
+      <PoziceX>100</PoziceX>
+      <PoziceY>100</PoziceY>
+      <MaxRychlost>75</MaxRychlost>
+    </Spawn>
+  </Spawny>
+
+  <Cile>
+    <Cil>
+      <PoziceX>500</PoziceX>
+      <PoziceY>500</PoziceY>
+      <VelikostX>50</VelikostX>
+      <VelikostY>50</VelikostY>
+    </Cil>
+  </Cile>
+
+</Level>

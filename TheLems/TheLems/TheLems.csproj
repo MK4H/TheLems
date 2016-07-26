@@ -85,6 +85,9 @@
     <Content Include="Animations\Defeat.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Animations\GenBackground.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Animations\Loading.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -106,19 +109,20 @@
     <Content Include="Animations\Victory.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Levels\Level1_popredi.png">
+    <Content Include="Levels\Level1\Level1_popredi.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Levels\Level1_pozadi.png">
+    <Content Include="Levels\Level1\Level1_pozadi.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Levels\Level2_info.xml">
+    <Content Include="Levels\Level1\Level1_info.xml" />
+    <Content Include="Levels\Level2\Level2_info.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Levels\Level2_popredi.png">
+    <Content Include="Levels\Level2\Level2_popredi.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Levels\Level2_pozadi.png">
+    <Content Include="Levels\Level2\Level2_pozadi.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
