@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0"?>
 
-<Level Name="Level1">
+<Level Jmeno="Level1">
   <Description>Prvni level, co jsem kdy udelal</Description>
   <PocetLemmingu>20</PocetLemmingu>
   <HraniceProcentProVitezstvi>50</HraniceProcentProVitezstvi>

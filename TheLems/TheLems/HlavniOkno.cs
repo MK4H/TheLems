@@ -337,6 +337,7 @@ namespace TheLems
                                             SwitchToBegin(Levels[AktLevelIndex]);
                                             break;
                                         case 2://Levels
+                                            SwitchToLevels();
                                             break;
                                         case 3://Menu
                                             SwitchToMenu();
@@ -360,6 +361,7 @@ namespace TheLems
                                             SwitchToMenu();
                                             break;
                                         case 1://Levels
+                                        SwitchToLevels();
                                             break;
                                         case 2://Next/Restart
                                             if (Win)
@@ -380,11 +382,31 @@ namespace TheLems
                                 }
                             }
                         break;
-                    case State.Levels://TODO
+                    case State.Levels:
+                        for (int i = 0; i < MenuTlacitka.Length; i++)
+                        {
+                            if (MenuTlacitka[i].Contains(e.Location))
+                            {
+                                switch (i)
+                                {
+                                    case 0://Zpet
+                                        ChangePageLevels(-1);
+                                        break;
+                                    case 1://Menu
+                                        SwitchToMenu();
+                                        break;
+                                    case 2://Dalsi
+                                        ChangePageLevels(+1);
+                                        break;
+                                    default://Nejaka mapa
+                                        AktLevelIndex = (Strana - 1) * 9 + i - 3;
+                                        SwitchToBegin(Levels[AktLevelIndex]);
+                                        break;
+                                }
+                                break;
+                            }
+                        }
                         break;
-
-                        
-
                 }
             }
         }
@@ -392,17 +414,18 @@ namespace TheLems
         private void PictureBoxMenu_MouseMove(object sender, MouseEventArgs e)
         {
             int Tlacitko = -1;
+            for (int i = 0; i < MenuTlacitka.Length; i++)
+            {
+                if (MenuTlacitka[i].Contains(e.Location))
+                {
+                    Tlacitko = i;
+                    break;
+                }
+            }
             switch (Stav)
             {
                 case State.Menu:
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            Tlacitko = i;
-                            break;
-                        }
-                    }
+                    
 
                     if (Tlacitko != -1)
                     {
@@ -418,14 +441,7 @@ namespace TheLems
                     break;
                 case State.Pauza:
                     GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
-                    for (int i = 0; i < MenuTlacitka.Length ; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            Tlacitko = i;
-                            break;
-                        }
-                    }
+                    
                     if (Tlacitko != -1)
                     {
                         GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
@@ -434,14 +450,7 @@ namespace TheLems
                     break;
                 case State.End:
                     GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            Tlacitko = i;
-                            break;
-                        }
-                    }
+                    
                     if (Tlacitko != -1)
                     {
                         GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
@@ -450,14 +459,7 @@ namespace TheLems
                     break;
                 case State.Begin:
                     GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
-                    for (int i = 0; i < MenuTlacitka.Length; i++)
-                    {
-                        if (MenuTlacitka[i].Contains(e.Location))
-                        {
-                            Tlacitko = i;
-                            break;
-                        }
-                    }
+                   
                     if (Tlacitko != -1)
                     {
                         GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
@@ -465,6 +467,13 @@ namespace TheLems
                     PictureBoxMenu.Refresh();
                     break;
                 case State.Levels:
+                    GrafikaMenu.DrawRectangles(new Pen(Color.Black, 3), MenuTlacitka);
+
+                    if (Tlacitko != -1)
+                    {
+                        GrafikaMenu.DrawRectangle(new Pen(Color.White, 3), MenuTlacitka[Tlacitko]);
+                    }
+                    PictureBoxMenu.Refresh();
                     break;
             }
         }
@@ -597,6 +606,9 @@ namespace TheLems
             MenuTlacitka[1] = new Rectangle(980, 668, 300, 100);
             MouseOverTlacitko = -1;
 
+            //Doplneni cesty o zacatky nazvu souboru
+            CestaKLevelu.Substring(CestaKLevelu.LastIndexOf((char)92) + 1);
+            CestaKLevelu = CestaKLevelu + '\\' + CestaKLevelu.Substring(CestaKLevelu.LastIndexOf((char)92) + 1);
             //Nacteni infa o levelu
             LevelDetails LevelInfo = new LevelDetails(CestaKLevelu + "_info.xml");
 
@@ -805,35 +817,61 @@ namespace TheLems
                     break;
                     
             }
+            Stav = State.Levels;
             ToPictureBoxGame = null; ToPictureBoxMap = null; ToPictureBoxText = null; ToPictureBoxButtons = null;
             GrafikaGameDisplay = null; GrafikaGameLandscape = null; GrafikaMap = null; GrafikaText = null;
             Popredi = null; Pozadi = null; PozadiMini = null; TlacitkaUp = null; TlacitkaDown = null; ObrazkyLemmu = null; ObrazkyLemmuRot = null;
             PauzaScreen = null;
 
-            Strana = 0;
+            Strana = 1;
             MouseOverTlacitko = -1;
-            MenuTlacitka = new Rectangle[12];
-            MenuTlacitka[0] = new Rectangle();
-            MenuTlacitka[1] = new Rectangle();
-            MenuTlacitka[2] = new Rectangle();
+            MenuTlacitka = new Rectangle[3];
+            MenuTlacitka[0] = new Rectangle(0,668,200,100);
+            MenuTlacitka[1] = new Rectangle(540,668,200,100);
+            MenuTlacitka[2] = new Rectangle(1080,668,200,100);
             PictureBoxMenu.Image = new Bitmap(@"Animations\GenBackground.png");
             PictureBoxMenu.Size = PictureBoxMenu.Image.Size;
             PictureBoxMenu.Left = 0;
             PictureBoxMenu.Top = 0;
             GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
-            //TODO VYKRESLIT MAPY
-            for (int i = 0; i < 3 && i*3 < Levels.Length; i++)
+            ChangePageLevels( 0);
+        }
+
+        private void ChangePageLevels( int OKolik)
+        {
+            Strana += OKolik;
+            if (9 * Strana - Levels.Length < 9 && Strana > 0)
             {
-                for (int j = 0; j < 3 && i * 3 + j < Levels.Length; j++)
+                int Radek = -1,PocetMap = 0;
+                for (int i = (Strana - 1) * 9; (i < Strana * 9) && i < Levels.Length; i++)
                 {
-                    GrafikaMenu.DrawImage(
-                        new Bitmap(Levels[i * 3 + j] + "\\" + Levels[i * 3 + j].Substring(Levels[i * 3 + j].LastIndexOf('\\') + 1) + "_pozadi.png"), // At zije quoting a escapovani
-                        50 + j * 400, 50 + i * 250, 350, 200);
-                    GrafikaMenu.DrawImage(
-                        new Bitmap(Levels[i * 3 + j] + "\\" + Levels[i * 3 + j].Substring(Levels[i * 3 + j].LastIndexOf('\\') + 1) + "_popredi.png")
-                        , 50 + j * 400, 50 + i * 50, 350, 200);
+                    if (i % 3 == 0)
+                        Radek++;
+                    GrafikaMenu.DrawImage(new Bitmap(Levels[i] + "\\" + Levels[i].Substring(Levels[i].LastIndexOf('\\') + 1) + "_pozadi.png"), // At zije quoting a escapovani
+                        50 + (i % 3) * 400, 50 + Radek * 200, 350, 150);
+                    GrafikaMenu.DrawImage(new Bitmap(Levels[i] + "\\" + Levels[i].Substring(Levels[i].LastIndexOf('\\') + 1) + "_popredi.png"), // At zije quoting a escapovani
+                        50 + (i % 3) * 400, 50 + Radek * 200, 350, 150);
+                    PocetMap++;
                 }
+
+                //Predelani tlacitek do spravnyho poctu
+                Rectangle[] TempTlacitka = new Rectangle[3 + PocetMap];
+                //Kopirovani zakladnich trech tlacitek zpet, menu, dalsi
+                for (int i = 0; i < 3; i++)
+                    TempTlacitka[i] = MenuTlacitka[i];
+                //Doplneni tlacitek map
+                Radek = -1;
+                for (int i = 3; i < PocetMap + 3; i++)
+                {
+                    if (i % 3 == 0)
+                        Radek++;
+                    TempTlacitka[i] = new Rectangle(50 + (i % 3) * 400, 20 + Radek * 200, 350, 180);
+                }
+
+                MenuTlacitka = TempTlacitka;
             }
+            else
+                Strana -= OKolik;
         }
 
         private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
@@ -1144,6 +1182,12 @@ namespace TheLems
         public readonly int PocetCilu;
         public readonly Rectangle[] Cile;
         
+        static string GetName(string CestaKXml)
+        {
+            XmlDocument Input = new XmlDocument();
+            Input.Load(CestaKXml);
+            return Input.SelectSingleNode("/Level").Attributes["Jmeno"].Value;
+        }
 
         public LevelDetails(string CestaKXml)
         { 
