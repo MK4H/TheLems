@@ -23,7 +23,7 @@ namespace TheLems
         double PomerX,PomerY;
         int MouseOverTlacitko;
         Bitmap ToPictureBoxGame, ToPictureBoxButtons, ToPictureBoxMap, ToPictureBoxText, Popredi,
-            Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, VictoryScreen, LossScreen, PauzaScreen;
+            Pozadi, PozadiMini,TlacitkaUp, TlacitkaDown, PauzaScreen;
         Bitmap[] ObrazkyLemmu, ObrazkyLemmuRot, MenuTlacitkaPics;
         Logika Hra;
         Graphics GrafikaGameDisplay, GrafikaGameLandscape, GrafikaButtons, GrafikaMap, GrafikaText, GrafikaMenu;
@@ -45,7 +45,6 @@ namespace TheLems
         }
 
         //AUTOMATICKE METODY
-
 
         private void Timer_Tick(object sender, EventArgs e)
         {
@@ -120,6 +119,7 @@ namespace TheLems
                         ButtonClickDraw(10);
                         break;
                     case Keys.Escape:
+                        SwitchToPause();
                         break;
                 }
             }
@@ -274,6 +274,7 @@ namespace TheLems
             }
         }
 
+        //Protoze je tento picturebox pouzivan vsude, kde se nepouzivaji pictureboxy hry, je toto trochu delsi
         private void PictureBoxMenu_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -521,6 +522,9 @@ namespace TheLems
 
         }
 
+
+            //Metody switch - schovají nepotřebné pictureboxy, uvolní paměť od nepotřebných obrázků, načtou správné obrázky
+                //zobrazí správné pictureboxy
         private void SwitchToMenu()
         {
             switch (Stav)
@@ -840,7 +844,7 @@ namespace TheLems
             GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
             ChangePageLevels( 0);
         }
-
+        //zmeni zobrazene levely na dalsi/predchozy devitici
         private void ChangePageLevels( int OKolik)
         {
             Strana += OKolik;
@@ -921,8 +925,9 @@ namespace TheLems
             GrafikaMenu = Graphics.FromImage(PictureBoxMenu.Image);
             PictureBoxMenu.Refresh();
         }
-
-        private void ImpactDraw(DrawInfoTransfer DrawInfo) //Vykresli popredi, protoze to potom bere Logika
+        
+        //provede zmeny popredi, protoze to potom bere Logika
+        private void ImpactDraw(DrawInfoTransfer DrawInfo)
         {
             //Vykresli nove schody do popredi
             while (DrawInfo.Stairs != null)
@@ -983,7 +988,8 @@ namespace TheLems
                 DrawInfo.Spaces = DrawInfo.Spaces.Dalsi;
             }
         }
-
+        
+        //vykresli vse do pictureboxu PictureBoxGame
         private void GameDraw(DrawInfoTransfer DrawInfo)
         {
             GrafikaGameDisplay.Clear(Color.Black); //Vymazani obrazovky
@@ -1037,7 +1043,8 @@ namespace TheLems
             PictureBoxGame.Refresh();
             //UbehlyCas = DateTime.Now.Subtract(Cas); //FORTESTING
         }
-
+        
+        //vykresli vse do pictureboxu PictureBoxMap
         private void MapDraw(DrawInfoTransfer DrawInfo)
         {
             GrafikaMap.Clear(Color.Black);
@@ -1066,7 +1073,8 @@ namespace TheLems
                 Convert.ToInt32(Math.Floor(ZobrazenaCast.Height * PomerY))));
             PictureBoxMap.Refresh();
         }
-
+        
+        //vykresli vse do pictureboxu PictureBoxText
         private void TextDraw()
         {
             Point PoziceMysiMapa = PoziceMysiObrazovka;
@@ -1090,7 +1098,8 @@ namespace TheLems
 
             PictureBoxText.Refresh();
         }
-
+        
+        //vykresli pocty pouziti do tlacitek, pro odlehceni
         private void ButtonNumbersDraw()
         {
             string AktString;
@@ -1104,14 +1113,16 @@ namespace TheLems
             }
             PictureBoxButtons.Refresh();
         }
-
+        
+        //pri zmene tlacitka vykresli vsechna tlacitka znovu
         private void ButtonClickDraw(int Clicked)
         {
             GrafikaButtons.DrawImage(TlacitkaUp, 0, 0);
             GrafikaButtons.DrawImage(TlacitkaDown, (Clicked - 1) * 70, 0, new Rectangle((Clicked - 1) * 70, 0, 70, 120), GraphicsUnit.Pixel);
             ButtonNumbersDraw();
         }
-
+        
+        //pohne zobrazenym rectanglem, ktery vyrezava z vlastniho levelu cast zobrazenou v GameDraw
         private void MoveZobrazenyRect(int x, int y)
         {
             if ((ZobrazenaCast.Right + x <= Pozadi.Width) && (ZobrazenaCast.Left + x >= 0))
@@ -1129,7 +1140,8 @@ namespace TheLems
                 ZobrazenaCast.Y = Pozadi.Height - ZobrazenaCast.Height;
         }
     } 
-
+    //Pro prevod informaci z logiky do vykreslovani, puvodne delano pro Threading, bohuzel to nevyslo
+    //Obsahuje 3 spojaky
     class DrawInfoTransfer
     {
         public DrawLemmings Lemmings;
@@ -1144,8 +1156,9 @@ namespace TheLems
 
         }
     }
-
-    class DrawLemmings //Pro predavani informaci, kam nakreslit lemingy
+    
+    //spojak obsahujici info o Lemmingach
+    class DrawLemmings
     {
         public Point Pozice;
         public int Typ;
@@ -1170,7 +1183,8 @@ namespace TheLems
             Dalsi = null;
         }
     }
-
+    
+    //spojak obsahujici info o Kopani a vybuchu
     class DrawSpace
     {
         public int Typ;
@@ -1192,7 +1206,8 @@ namespace TheLems
             Dalsi = null;
         }
     }
-
+    
+    //spojak obsahujici info o schodech
     class DrawStairs
     {
         public Point Pozice;
@@ -1212,7 +1227,8 @@ namespace TheLems
             Dalsi = null;
         }
     }
-
+    
+    //pro cteni XML dokumentu s infem o lvlu
     class LevelDetails
     {
         public readonly string Jmeno;
@@ -1277,7 +1293,8 @@ namespace TheLems
             }            
         }
     }
-
+    
+    //konstanty pouzivane v programu, pro jejich rychlejsi zmenu
     static class Konstanty
     {
         public static int velikostLemaX = 24;
@@ -1285,7 +1302,8 @@ namespace TheLems
         public static int velikostKurzoru = 40;
         public static int Rychlosthry = 25;
     }
-
+    
+    //vlastni logika hry
     class Logika
     {
 
